@@ -1,0 +1,28 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta2
+kind: HelmRelease
+metadata:
+  name: gloo
+  namespace: flux-system
+spec:
+  interval: 5m
+  chart:
+    spec:
+      chart: gloo
+      version: 1.16.0 # Use the version compatible with your setup
+      sourceRef:
+        kind: HelmRepository
+        name: gloo-platform
+        namespace: flux-system
+  releaseName: gloo
+  targetNamespace: gloo-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  values:
+    gatewayProxies:
+      disabled: true
+    gloo:
+      disableLeaderElection: true
+    kubeGateway:
+      enabled: true
