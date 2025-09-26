@@ -21,7 +21,8 @@ spec:
     crds: CreateReplace
   values:
     gatewayProxies:
-      disabled: true
+      gatewayProxy:
+        disabled: true
     gloo:
       disableLeaderElection: true
     kubeGateway:
