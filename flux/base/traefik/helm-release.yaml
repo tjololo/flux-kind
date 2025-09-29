@@ -39,6 +39,8 @@ spec:
     
     providers:
       kubernetesIngress:
+        enabled: false
+      kubernetesGateway:
         enabled: true
       kubernetesCRD:
         enabled: true
