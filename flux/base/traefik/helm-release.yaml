@@ -25,12 +25,12 @@ spec:
     ports:
       web:
         exposeExternal: true
-        port: 80
+        port: 8080
         # For Kind, you might need to map host port if you want to access directly
         # hostPort: 80
       websecure:
         exposeExternal: true
-        port: 443
+        port: 8443
         # hostPort: 443
       traefik:
         exposeExternal: true

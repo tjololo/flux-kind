@@ -7,14 +7,14 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 80
+  - containerPort: 8080
     hostPort: 8080
     protocol: TCP
-  - containerPort: 443
+  - containerPort: 8443
     hostPort: 8443
     protocol: TCP
-  - containerPort: 8000
-    hostPort: 8000
+  - containerPort: 9000
+    hostPort: 9000
     protocol: TCP
 EOF
 
