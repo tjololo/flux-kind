@@ -26,11 +26,28 @@ spec:
         matchRule: Host(`dashboard.localhost`)
         entryPoints:
           - web
+    ports:
+      web:
+        exposeExternal: true
+        port: 80
+        # For Kind, you might need to map host port if you want to access directly
+        # hostPort: 80
+      websecure:
+        exposeExternal: true
+        port: 443
+        # hostPort: 443
+      traefik:
+        exposeExternal: true
+        port: 9000 # Default port for Traefik API/dashboard, not entrypoint
+        # hostPort: 9000 # Map this to access dashboard from host
+    
     providers:
-      kubernetesGateway:
+      kubernetesIngress:
         enabled: true
-    gateway:
-      listeners:
-        web:
-          namespacePolicy:
-            from: All
+      kubernetesCRD:
+        enabled: true
+    
+    dashboard:
+      enabled: true
+      # Insecure mode for easier access in development, not recommended for production
+      insecure: true 
