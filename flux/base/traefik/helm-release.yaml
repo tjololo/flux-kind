@@ -20,6 +20,8 @@ spec:
     crds: CreateReplace
   targetNamespace: traefik-system
   values:
+    service:
+      type: NodePort
     ports:
       web:
         exposeExternal: true
