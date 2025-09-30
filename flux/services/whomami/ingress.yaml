@@ -5,15 +5,15 @@ metadata:
   namespace: whoami
 spec:
   parentRefs:
-    - name: gloo-gateway
-      namespace: gloo-system
+    - name: traefik-gateway
+      namespace: traefik-system
+  hostnames:
+    - "whoami.local"
   rules:
-    - hostnames:
-        - "whoami.local"
-      matches:
-        - path:
-            type: PathPrefix
-            value: /
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /
       backendRefs:
         - name: whoami
           port: 80

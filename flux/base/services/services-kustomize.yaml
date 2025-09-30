@@ -1,0 +1,13 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: services
+  namespace: services
+spec:
+  interval: 1m0s
+  path: ./flux/services/
+  prune: true
+  serviceAccountName: application-manager
+  sourceRef:
+    kind: GitRepository
+    name: base
