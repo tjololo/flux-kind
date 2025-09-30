@@ -8,6 +8,7 @@ spec:
   path: ./flux/services/
   prune: true
   serviceAccountName: application-manager
+  targetNamespace: services
   sourceRef:
     kind: GitRepository
     name: base
