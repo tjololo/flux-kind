@@ -4,3 +4,4 @@ resources:
   - ./gateway-api
   #- ./gloo
   - ./traefik
+  - ./services/
