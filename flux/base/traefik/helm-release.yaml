@@ -24,9 +24,9 @@ spec:
       type: NodePort
     ports:
       web:
-        nodePort: 8080
+        nodePort: 38080
       websecure:
-        nodePort: 8443  
+        nodePort: 38443  
     ingress:
       traefik:
         exposeExternal: true
