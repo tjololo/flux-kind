@@ -1,0 +1,8 @@
+apiVersion: kro.run/v1alpha1
+kind: SimpleApp
+metadata:
+  name: my-simpleapp
+spec:
+  name: awesome-app
+  httproute:
+    enabled: true

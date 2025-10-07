@@ -12,6 +12,7 @@ spec:
       image: string | default="traefik/whoami"
       httproute:
         enabled: boolean | default=false
+        hostname: string | default="${schema.spec.name}.local"
     status:
       # Fields the controller will inject into instances status.
       deploymentConditions: ${deployment.status.conditions}
