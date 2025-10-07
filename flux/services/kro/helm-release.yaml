@@ -1,7 +1,8 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta2
 kind: HelmRelease
 metadata:
-  name: glookroflux-system
+  name: kro
+  namespace: kro
 spec:
   interval: 60m
   chart:
