@@ -5,14 +5,10 @@ metadata:
   namespace: kro
 spec:
   interval: 60m
-  chart:
-    spec:
-      chart: kro
-      version: 0.4.1
-      sourceRef:
-        kind: OCIRepository
-        name: kro
-        namespace: kro
+  chartRef:
+    kind: OCIRepository
+    name: kro
+    namespace: kro
   releaseName: kro
   install:
     crds: CreateReplace
