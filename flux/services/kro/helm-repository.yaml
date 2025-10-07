@@ -1,9 +1,13 @@
 apiVersion: source.toolkit.fluxcd.io/v1
-kind: HelmRepository
+kind: OCIRepository
 metadata:
   name: kro
   namespace: kro
 spec:
-  type: "oci"
-  interval: 60m0s
+  interval: 10m
+  layerSelector:
+    mediaType: "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+    operation: copy
+  ref:
+    semver: ">= 0.4.1"
   url: oci://ghcr.io/kro-run/kro/kro
