@@ -4,7 +4,7 @@ metadata:
   name: simpleapp
 spec:
   schema:
-    apiVersion: tjololo.k8s.io/v1alpha1
+    apiVersion: v1alpha1
     kind: SimpleApp
     spec:
       # Spec fields that users can provide.
