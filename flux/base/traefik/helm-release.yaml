@@ -21,7 +21,7 @@ spec:
   targetNamespace: traefik-system
   values:
     service:
-      type: NodePort
+      type: ClusterIP
     ports:
       web:
         exposeExternal: true
