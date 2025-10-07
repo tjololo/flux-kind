@@ -12,7 +12,7 @@ rules:
   - apiGroups: [""]
     resources: ["services"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
-  - apiGroups: ["tjololo.k8s.io"]
+  - apiGroups: ["kro.run"]
     resources: ["simpleapp"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---
