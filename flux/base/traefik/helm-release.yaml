@@ -29,6 +29,11 @@ spec:
         exposeExternal: true
       traefik:
         exposeExternal: true
+    listeners:
+      web:
+        namespacePolicy: All
+      websecure:
+        namespacePolicy: All
     
     providers:
       kubernetesIngress:
