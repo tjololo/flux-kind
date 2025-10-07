@@ -7,6 +7,9 @@ spec:
   interval: 1m0s
   path: ./flux/limited-services/
   prune: true
+  dependsOn:
+    - name: services
+      namespace: flux-system
   serviceAccountName: application-manager
   targetNamespace: limited-services
   sourceRef:
