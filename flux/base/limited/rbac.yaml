@@ -17,11 +17,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: application-manager
-  namespace: services
+  namespace: limited-services
 subjects:
   - kind: ServiceAccount
     name: application-manager
-    namespace: services
+    namespace: limited-services
 roleRef:
   kind: ClusterRole
   name: application-manager

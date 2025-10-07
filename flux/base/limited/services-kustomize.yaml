@@ -1,13 +1,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: services
-  namespace: services
+  name: limited-services
+  namespace: limited-services
 spec:
   interval: 1m0s
-  path: ./flux/services/
+  path: ./flux/limited-services/
   prune: true
-  targetNamespace: services
+  serviceAccountName: application-manager
+  targetNamespace: limited-services
   sourceRef:
     kind: GitRepository
     name: base
