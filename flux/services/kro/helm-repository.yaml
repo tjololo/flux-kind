@@ -10,4 +10,4 @@ spec:
     operation: copy
   ref:
     semver: ">= 0.5.0"
-  url: oci://ghcr.io/kro-run/kro/kro
+  url: oci://registry.k8s.io/kro/charts/kro
