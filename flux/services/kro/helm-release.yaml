@@ -12,5 +12,7 @@ spec:
   releaseName: kro
   install:
     crds: CreateReplace
+    disableSchemaValidation: true
   upgrade:
     crds: CreateReplace
+    disableSchemaValidation: true
