@@ -62,10 +62,10 @@ spec:
       template:
         apiVersion: gateway.networking.k8s.io/v1
         kind: HTTPRoute
-        finalizers:
-          - tjololo.net/prevent-delete
         metadata:
           name: ${schema.spec.name}-httproute
+          finalizers:
+            - tjololo.net/prevent-delete
         spec:
           parentRefs:
             - name: traefik-gateway
