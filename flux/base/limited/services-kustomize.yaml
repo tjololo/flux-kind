@@ -8,7 +8,7 @@ spec:
   path: ./flux/limited-services/
   prune: true
   dependsOn:
-    - name: services
+    - name: resourcegraphs
       namespace: flux-system
   serviceAccountName: application-manager
   targetNamespace: limited-services
