@@ -65,7 +65,7 @@ spec:
         metadata:
           name: ${schema.spec.name}-httproute
           finalizers:
-            - tjololo.net/prevent-delete
+            - "tjololo.net/prevent-delete"
         spec:
           parentRefs:
             - name: traefik-gateway
