@@ -27,6 +27,8 @@ spec:
         kind: Deployment
         metadata:
           name: ${schema.spec.name} # Use the name provided by user
+          labels:
+            test-random: "${schema.spec.name}-${random.seededString(10, schema.spec.name)}"
         spec:
           replicas: ${schema.spec.replicas}
           selector:
