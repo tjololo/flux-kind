@@ -25,10 +25,8 @@ spec:
       type: NodePort
     ports:
       web:
-        expose: true
         nodePort: 30000
       websecure:
-        expose: true
         nodePort: 30001
     ingress:
       traefik:
