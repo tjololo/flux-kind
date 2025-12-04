@@ -36,11 +36,13 @@ spec:
       listeners:
         web:
           port: 8080
+          protocol: HTTP
           namespacePolicy:
             from: All
           hostname: "*.418.local"
         websecure:
           port: 8443
+          protocol: HTTPS
           namespacePolicy:
             from: All
           hostname: "*.418.local"
