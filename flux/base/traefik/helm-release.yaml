@@ -8,7 +8,7 @@ spec:
   chart:
     spec:
       chart: traefik
-      version: 37.1.1
+      version: 37.4.0
       sourceRef:
         kind: HelmRepository
         name: traefik
@@ -31,15 +31,16 @@ spec:
     ingress:
       traefik:
         exposeExternal: true
-    listeners:
-      web:
-        namespacePolicy: All
-      websecure:
-        namespacePolicy: All
     gateway:
+      enabled: true
       listeners:
         web:
-          namespacePolicy: All
+          namespacePolicy:
+            from: All
+          hostname: "*.418.local"
+        websecure:
+          namespacePolicy:
+            from: All
           hostname: "*.418.local"
     
     providers:
