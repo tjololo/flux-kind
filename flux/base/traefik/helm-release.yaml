@@ -40,12 +40,6 @@ spec:
           namespacePolicy:
             from: All
           hostname: "*.418.local"
-        websecure:
-          port: 8443
-          protocol: HTTPS
-          namespacePolicy:
-            from: All
-          hostname: "*.418.local"
     
     providers:
       kubernetesIngress:
