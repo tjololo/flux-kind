@@ -20,6 +20,11 @@ spec:
     crds: CreateReplace
   targetNamespace: traefik-system
   values:
+    logs:
+      general:
+        level: "DEBUG"
+      access:
+        enabled: true
     service:
       enabled: true
       type: NodePort
