@@ -36,6 +36,11 @@ spec:
         namespacePolicy: All
       websecure:
         namespacePolicy: All
+    gateway:
+      listeners:
+        web:
+          namespacePolicy: All
+          hostname: "*.418.local"
     
     providers:
       kubernetesIngress:
