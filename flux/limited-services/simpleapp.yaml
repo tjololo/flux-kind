@@ -6,3 +6,4 @@ spec:
   name: awesome-app
   httproute:
     enabled: true
+    hostname: simple.418.local
