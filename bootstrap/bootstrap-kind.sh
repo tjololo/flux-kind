@@ -1,16 +1,16 @@
 # Ensure current kubectl context is not pointing to any cluster
 kubectl config unset current-context
 
-cat <<EOF | kind create cluster --config=-
+cat <<EOF | KIND_EXPERIMENTAL_PROVIDER=podman kind create cluster --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
-  - containerPort: 80
+  - containerPort: 3000
     hostPort: 8080
     protocol: TCP
-  - containerPort: 443
+  - containerPort: 3001
     hostPort: 8443
     protocol: TCP
   - containerPort: 9000
