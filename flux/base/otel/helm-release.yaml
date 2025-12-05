@@ -1,16 +1,22 @@
-apiVersion: helm.toolkit.fluxcd.io/v2beta2
+apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: otel-operator
   namespace: flux-system
 spec:
-  interval: 60m
-  chartRef:
-    kind: OCIRepository
-    name: otel-operator
-    namespace: flux-system
+  interval: 1h
+  timeout: 5m
+  chart:
+    spec:
+      chart: opentelemetry-operator
+      sourceRef:
+        kind: HelmRepository
+        name: otel-operator
+        namespace: flux-system
+      version: 0.99.2
   releaseName: otel-operator
   install:
     crds: CreateReplace
   upgrade:
     crds: CreateReplace
+  targetNamespace: otel-system
