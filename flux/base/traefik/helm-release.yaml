@@ -28,9 +28,9 @@ spec:
     # service:
     #   enabled: true
     #   type: NodePort
-    # ports:
-    #   web:
-    #     nodePort: 30000
+    ports:
+      web:
+        port: 5678
     #   websecure:
     #     nodePort: 30001
     # ingress:
