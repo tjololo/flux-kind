@@ -7,7 +7,7 @@ spec:
   interval: 1h
   timeout: 5m
   dependsOn:
-    name: cert-manager
+  - name: cert-manager
     namespace: flux-system
   chart:
     spec:
