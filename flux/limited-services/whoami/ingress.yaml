@@ -4,6 +4,8 @@ metadata:
   name: whoami
   namespace: limited-services
 spec:
+  hostnames:
+    - "whoami.418.local"
   parentRefs:
     - name: traefik-gateway
       namespace: traefik-system
