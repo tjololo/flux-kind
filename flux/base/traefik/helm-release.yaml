@@ -22,20 +22,20 @@ spec:
   values:
     logs:
       general:
-        level: "DEBUG"
+        level: "INFO"
       access:
         enabled: true
-    service:
-      enabled: true
-      type: NodePort
-    ports:
-      web:
-        nodePort: 30000
-      websecure:
-        nodePort: 30001
-    ingress:
-      traefik:
-        exposeExternal: true
+    # service:
+    #   enabled: true
+    #   type: NodePort
+    # ports:
+    #   web:
+    #     nodePort: 30000
+    #   websecure:
+    #     nodePort: 30001
+    # ingress:
+    #   traefik:
+    #     exposeExternal: true
     gateway:
       enabled: true
       listeners:
