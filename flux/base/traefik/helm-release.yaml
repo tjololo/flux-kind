@@ -31,7 +31,7 @@ spec:
     ports:
       web:
         port: 30000
-        nodePort: nil
+        nodePort: null
         exposedPort: 5678
       websecure:
         expose:
