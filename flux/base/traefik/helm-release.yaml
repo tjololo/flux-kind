@@ -31,7 +31,7 @@ spec:
     ports:
       web:
         port: 30000
-        exposedPort: 8080
+        exposedPort: 5678
     #   websecure:
     #     nodePort: 30001
     # ingress:
@@ -45,7 +45,6 @@ spec:
           protocol: HTTP
           namespacePolicy:
             from: All
-          hostname: "*.418.local"
     
     providers:
       kubernetesIngress:

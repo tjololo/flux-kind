@@ -8,8 +8,6 @@ spec:
     - name: traefik-gateway
       namespace: traefik-system
       sectionName: web
-  hostnames:
-    - "whoami.418.local"
   rules:
     - matches:
       - path:
