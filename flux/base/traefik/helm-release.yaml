@@ -32,8 +32,9 @@ spec:
       web:
         port: 30000
         exposedPort: 5678
-    #   websecure:
-    #     nodePort: 30001
+      websecure:
+        expose:
+          default: false
     # ingress:
     #   traefik:
     #     exposeExternal: true
