@@ -30,7 +30,8 @@ spec:
     #   type: NodePort
     ports:
       web:
-        port: 5678
+        port: 30000
+        exposedPort: 8080
     #   websecure:
     #     nodePort: 30001
     # ingress:
@@ -40,7 +41,7 @@ spec:
       enabled: true
       listeners:
         web:
-          port: 5678
+          port: 30000
           protocol: HTTP
           namespacePolicy:
             from: All
