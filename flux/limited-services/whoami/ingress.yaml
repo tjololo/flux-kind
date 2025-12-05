@@ -5,7 +5,7 @@ metadata:
   namespace: limited-services
 spec:
   hostnames:
-    - "whoami.418.local"
+    - "kind.418.local"
   parentRefs:
     - name: traefik-gateway
       namespace: traefik-system
@@ -15,6 +15,12 @@ spec:
       - path:
           type: PathPrefix
           value: /
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
       backendRefs:
         - name: whoami
           namespace: limited-services
