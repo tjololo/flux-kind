@@ -40,7 +40,7 @@ spec:
       enabled: true
       listeners:
         web:
-          port: 8080
+          port: 5678
           protocol: HTTP
           namespacePolicy:
             from: All
