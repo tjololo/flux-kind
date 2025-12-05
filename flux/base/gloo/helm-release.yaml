@@ -22,7 +22,7 @@ spec:
   values:
     gatewayProxies:
       gatewayProxy:
-        disabled: true
+        disabled: false
     gloo:
       disableLeaderElection: true
     kubeGateway:
