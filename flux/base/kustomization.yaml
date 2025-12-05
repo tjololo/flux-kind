@@ -6,4 +6,5 @@ resources:
   - ./traefik
   - ./services/
   - ./limited/
+  - ./cert-manager/
   - ./otel/
