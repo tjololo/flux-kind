@@ -7,6 +7,7 @@ cleanup() {
   kill $1 2>/dev/null
   exit 0
 }
+echo "Requiring sudo to setup cloud-provider-kind and edit /etc/hosts. https://github.com/kubernetes-sigs/cloud-provider-kind"
 sudo -v
 # Ensure current kubectl context is not pointing to any cluster
 kubectl config unset current-context
@@ -47,5 +48,7 @@ sudo sh -c 'cat <<EOF >> /etc/hosts
 EOF'
 trap "cleanup '$CPK_PID' '$SVC_IP'" EXIT INT TERM
 
-echo "Everything should be running. Press enter to cleanup"
+echo "Everything should be running." 
+echo "whoami service shoudl be available on http://kind.418.local:5678/whoami"
+echo "Press enter to cleanup"
 read fake_wait
