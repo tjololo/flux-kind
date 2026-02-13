@@ -49,8 +49,3 @@ spec:
         enabled: true
       kubernetesCRD:
         enabled: true
-    
-    dashboard:
-      enabled: true
-      # Insecure mode for easier access in development, not recommended for production
-      insecure: true 
