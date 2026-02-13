@@ -3,8 +3,9 @@ kind: Kustomization
 resources:
   - ./gateway-api
   # - ./gloo
+  - ./cert-manager/
+  - ./linkerd
   - ./traefik
   - ./services/
   - ./limited/
-  - ./cert-manager/
   - ./otel/
