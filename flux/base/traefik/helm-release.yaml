@@ -47,5 +47,6 @@ spec:
         enabled: false
       kubernetesGateway:
         enabled: true
+        experimentalChannel: true
       kubernetesCRD:
         enabled: true
