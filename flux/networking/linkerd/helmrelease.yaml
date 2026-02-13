@@ -41,7 +41,7 @@ spec:
   timeout: 10m
   dependsOn:
     - name: cert-manager
-      namespace: cert-manager
+      namespace: flux-system
     - name: linkerd-crds
       namespace: linkerd
   install:
