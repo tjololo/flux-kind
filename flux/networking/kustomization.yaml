@@ -3,5 +3,5 @@ kind: Kustomization
 resources:
   # - ./gloo
   - ./linkerd
-  - ./otel
+  - ./collector
   - ./traefik
