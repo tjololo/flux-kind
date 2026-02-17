@@ -14,9 +14,10 @@ spec:
         apiVersions: ["v1"]
         operations: ["CREATE","UPDATE"]
         resources: ["namespaces"]
-    objectSelector:
-      matchLabels:
-        linkerd.io/injection: enabled
+  matchConditions:
+    - name: has-linkerd-inject
+      expression: |
+        has(object.metadata.labels) && object.metadata.labels["linkerd.io/inject"] == 'enabled'
   variables:
     - name: targetNs
       expression: "object.metadata.name"
