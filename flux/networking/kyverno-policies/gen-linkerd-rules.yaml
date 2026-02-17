@@ -3,6 +3,11 @@ kind: GeneratingPolicy
 metadata:
   name: gen-linkerd-rules
 spec:
+  evaluation:
+    synchronize:
+      enabled: true
+    generateExisting:
+      enabled: true
   matchConstraints:
     resourceRules:
       - apiGroups: [""]
