@@ -10,11 +10,9 @@ spec:
         apiVersions: ["v1"]
         operations: ["CREATE"]
         resources: ["namespaces"]
-  preconditions:
-    all:
-      - key: "{{ object.metadata.labels.\"linkerd.io/injection\" || '' }}"
-        operator: Equals
-        value: enabled
+    objectSelector:
+      matchLabels:
+        linkerd.io/injection: enabled
   variables:
     - name: targetNs
       expression: "object.metadata.name"
