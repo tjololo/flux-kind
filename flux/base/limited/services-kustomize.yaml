@@ -10,6 +10,8 @@ spec:
   dependsOn:
     - name: resourcegraphs
       namespace: flux-system
+    - name: networking-services
+      namespace: flux-system
   serviceAccountName: application-manager
   targetNamespace: limited-services
   sourceRef:

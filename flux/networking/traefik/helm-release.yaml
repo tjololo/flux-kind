@@ -14,6 +14,9 @@ spec:
         name: traefik
         namespace: flux-system
   releaseName: traefik
+  dependsOn:
+    - name: linkerd
+      namespace: linkerd
   install:
     crds: CreateReplace
   upgrade:
