@@ -1,0 +1,182 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel
+  namespace: otel-col
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.140.1
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    linkerd.io/inject: "enabled"
+    config.linkerd.io/skip-outbound-ports: "443"
+  resources:
+    limits:
+      memory: 1000Mi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+  mode: deployment
+  upgradeStrategy: automatic
+  serviceAccount: otel-collector
+  observability:
+    metrics:
+      disablePrometheusAnnotations: true
+      enableMetrics: true
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch: {}
+      # Extract k8s attributes
+      k8sattributes:
+        auth_type: 'serviceAccount'
+        wait_for_metadata: true
+        wait_for_metadata_timeout: 10s
+        extract:
+          metadata: # extracted from the pod
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.deployment.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.daemonset.name
+            - k8s.node.name
+            - service.name
+          labels:
+            - tag_name: otel.sampling
+              key: otel/sampling
+              from: deployment
+        pod_association:
+          - sources:
+              # This rule associates all resources containing the 'k8s.pod.ip' attribute with the matching pods. If this attribute is not present in the resource, this rule will not be able to find the matching pod.
+              - from: resource_attribute
+                name: k8s.pod.ip
+          - sources:
+              # This rule associates all resources containing the 'k8s.pod.uid' attribute with the matching pods. If this attribute is not present in the resource, this rule will not be able to find the matching pod.
+              - from: resource_attribute
+                name: k8s.pod.uid
+          - sources:
+              - from: connection
+      # DIS platform specific transformations
+      transform/sampling:
+        error_mode: ignore
+        trace_statements:
+          - context: span
+            statements:
+            # Ensure otel sampling suggestion is set
+            - set(attributes["otel.sampling"], resource.attributes["otel.sampling"]) where resource.attributes["otel.sampling"] != nil
+            - set(attributes["otel.sampling"], "minimum") where attributes["otel.sampling"] == nil
+      tail_sampling:
+        decision_wait: 10s
+        num_traces: 1000
+        policies:
+          - name: default
+            type: and
+            and:
+              and_sub_policy:
+                - name: not-route-live-ready-policy
+                  type: string_attribute
+                  string_attribute:
+                    key: http.route
+                    values: 
+                      - "^/metrics"
+                      - "^/health"
+                    invert_match: true
+                    enabled_regex_matching: true
+                - name: not-all-sampling-attr
+                  type: string_attribute
+                  string_attribute:
+                    key: otel.sampling
+                    values: [all]
+                    invert_match: true
+                - name: probabilistic-policy
+                  type: probabilistic
+                  probabilistic:
+                    sampling_percentage: 1
+          - name: sample-all
+            type: and
+            and:
+              and_sub_policy:
+                - name: not-route-live-ready-policy
+                  type: string_attribute
+                  string_attribute:
+                    key: http.route
+                    values: 
+                      - "^/metrics"
+                      - "^/health"
+                    invert_match: true
+                    enabled_regex_matching: true
+                - name: all-sampling-attr
+                  type: string_attribute
+                  string_attribute:
+                    key: otel.sampling
+                    values: [all]
+                - name: probabilistic-policy
+                  type: probabilistic
+                  probabilistic:
+                    sampling_percentage: 100
+          - name: heavy-sampling
+            type: and
+            and:
+              and_sub_policy:
+                - name: route-live-ready-policy
+                  type: string_attribute
+                  string_attribute:
+                    key: http.route
+                    values: 
+                      - "^/metrics"
+                      - "^/health"
+                    enabled_regex_matching: true
+                  # apply probabilistic sampling
+                - name: probabilistic-policy
+                  type: probabilistic
+                  probabilistic:
+                    sampling_percentage: 0.1
+          - name: always-sample-errors
+            type: and
+            and:
+              and_sub_policy:
+                - name: trace-status-policy
+                  type: status_code
+                  status_code:
+                    status_codes:
+                      - ERROR
+          - name: always-sample-slow-requests
+            type: latency
+            latency:
+              threshold_ms: 1000
+      filter/logs:
+        error_mode: ignore
+        logs:
+          log_record:
+          - 'severity_number < SEVERITY_NUMBER_WARN' #Drop all Info, debug, trace and unspecified logs
+          - 'attributes["error"] == "secret default/ssl-cert does not exist"' # Remove noisy logs from traefik that is there due to some legacy configuration that does not affect the service
+      # Memory limiter to mitigate out of memory situations
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+    exporters:
+      debug: {}
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, transform/sampling, tail_sampling, batch]
+          exporters: [debug]
+        logs:
+          receivers: [otlp]
+          processors: [filter/logs, memory_limiter, k8sattributes, batch]
+          exporters: [debug]
+        metrics:
+          receivers: [otlp]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [debug]
