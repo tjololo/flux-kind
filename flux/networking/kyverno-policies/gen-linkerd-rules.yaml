@@ -12,37 +12,40 @@ spec:
     objectSelector:
       matchLabels:
         linkerd.io/injection: enabled
-  generate:
-    - expression: |
+  variables:
+    - name: targetNs
+      expression: "object.metadata.name"
+    - name: resources
+      expression: |
         [
           {
-            "apiVersion": "policy.linkerd.io/v1beta3",
-            "kind": "Server",
-            "metadata": {
+            "apiVersion": dyn("policy.linkerd.io/v1beta3"),
+            "kind": dyn("Server"),
+            "metadata": dyn({
               "name": "default-http"
-            },
-            "spec": {
-              "podSelector": {
-                "matchLabels": {}
-              },
-              "port": "http"
-            }
+            }),
+            "spec": dyn({
+              "podSelector": dyn({
+                "matchLabels": dyn({})
+              }),
+              "port": dyn("http")
+            })
           },
           {
-            "apiVersion": "policy.linkerd.io/v1beta3",
-            "kind": "HTTPRoute",
-            "metadata": {
+            "apiVersion": dyn("policy.linkerd.io/v1beta3"),
+            "kind": dyn("HTTPRoute"),
+            "metadata": dyn({
               "name": "health-metrics"
-            },
-            "spec": {
-              "parentRefs": [
+            }),
+            "spec": dyn({
+              "parentRefs": dyn([
                 {
                   "name": "default-http",
                   "kind": "Server",
                   "group": "policy.linkerd.io"
                 }
-              ],
-              "rules": [
+              ]),
+              "rules": dyn([
                 {
                   "matches": [
                     {
@@ -59,22 +62,24 @@ spec:
                     }
                   ]
                 }
-              ]
-            }
+              ])
+            })
           },
           {
-            "apiVersion": "policy.linkerd.io/v1alpha1",
-            "kind": "AuthorizationPolicy",
-            "metadata": {
+            "apiVersion": dyn("policy.linkerd.io/v1alpha1"),
+            "kind": dyn("AuthorizationPolicy"),
+            "metadata": dyn({
               "name": "allow-kubelet-probes"
-            },
-            "spec": {
-              "targetRef": {
+            }),
+            "spec": dyn({
+              "targetRef": dyn({
                 "group": "policy.linkerd.io",
                 "kind": "HTTPRoute",
                 "name": "health-metrics"
-              },
-              "requiredAuthenticationRefs": []
-            }
+              }),
+              "requiredAuthenticationRefs": dyn([])
+            })
           }
-        ].generator.Apply(object.metadata.name)
+        ]
+  generate:
+    - expression: "generator.Apply(variables.targetNs, variables.resources)"
