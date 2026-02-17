@@ -1,14 +1,14 @@
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: networking-services
+  name: third
   namespace: flux-system
 spec:
   interval: 1m0s
-  path: ./flux/networking/
+  path: ./flux/third/
   prune: true
   dependsOn:
-    - name: third
+    - name: second
       namespace: flux-system
   sourceRef:
     kind: GitRepository

@@ -37,7 +37,7 @@ kubectl wait --for=condition=available --timeout=90s deployment -n flux-system n
 
 kubectl apply -f ./base-kustomize
 
-kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system base  --for=condition=Ready --timeout=120
+kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system base  --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system networking-services  --for=condition=Ready --timeout=120s
 kubectl wait helmreleases.helm.toolkit.fluxcd.io -n flux-system traefik --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n limited-services limited-services  --for=condition=Ready --timeout=120s
