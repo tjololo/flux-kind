@@ -2,7 +2,6 @@ apiVersion: policies.kyverno.io/v1
 kind: GeneratingPolicy
 metadata:
   name: gen-linkerd-rules
-  namespace: kyverno
 spec:
   matchConstraints:
     resourceRules:
@@ -13,14 +12,11 @@ spec:
     objectSelector:
       matchLabels:
         linkerd.io/injection: enabled
-  variables:
-    - name: targetNs
-      expression: "object.metadata.name"
   generate:
     - expression: |
-        generator.Apply(variables.targetNs, [
+        [
           {
-            "apiVersion": "policy.linkerd.io/v1beta1",
+            "apiVersion": "policy.linkerd.io/v1beta3",
             "kind": "Server",
             "metadata": {
               "name": "default-http"
@@ -81,4 +77,4 @@ spec:
               "requiredAuthenticationRefs": []
             }
           }
-        ])
+        ].generator.Apply(object.metadata.name)
