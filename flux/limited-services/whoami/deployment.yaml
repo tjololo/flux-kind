@@ -5,6 +5,8 @@ metadata:
   namespace: limited-services
   labels:
     app.kubernetes.io/name: whoami
+  annotations:
+    linkerd.io/inject: enabled
 spec:
   replicas: 1
   selector:
