@@ -5,3 +5,4 @@ resources:
   - ./linkerd
   - ./collector
   - ./traefik
+  - ./kyverno-policies

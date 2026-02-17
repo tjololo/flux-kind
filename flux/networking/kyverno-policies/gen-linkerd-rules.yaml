@@ -1,0 +1,86 @@
+apiVersion: policies.kyverno.io/v1
+kind: GeneratingPolicy
+metadata:
+  name: gen-linkerd-rules
+  namespace: kyverno
+spec:
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        operations: ["CREATE"]
+        resources: ["namespaces"]
+  preconditions:
+    all:
+      - key: "{{ object.metadata.labels.\"linkerd.io/injection\" || '' }}"
+        operator: Equals
+        value: enabled
+  variables:
+    - name: targetNs
+      expression: "object.metadata.name"
+  generate:
+    - expression: |
+        generator.Apply(variables.targetNs, [
+          {
+            "apiVersion": "policy.linkerd.io/v1beta1",
+            "kind": "Server",
+            "metadata": {
+              "name": "default-http"
+            },
+            "spec": {
+              "podSelector": {
+                "matchLabels": {}
+              },
+              "port": "http"
+            }
+          },
+          {
+            "apiVersion": "policy.linkerd.io/v1beta3",
+            "kind": "HTTPRoute",
+            "metadata": {
+              "name": "health-metrics"
+            },
+            "spec": {
+              "parentRefs": [
+                {
+                  "name": "default-http",
+                  "kind": "Server",
+                  "group": "policy.linkerd.io"
+                }
+              ],
+              "rules": [
+                {
+                  "matches": [
+                    {
+                      "path": {
+                        "type": "PathPrefix",
+                        "value": "/health"
+                      }
+                    },
+                    {
+                      "path": {
+                        "type": "PathPrefix",
+                        "value": "/metrics"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "apiVersion": "policy.linkerd.io/v1alpha1",
+            "kind": "AuthorizationPolicy",
+            "metadata": {
+              "name": "allow-kubelet-probes"
+            },
+            "spec": {
+              "targetRef": {
+                "group": "policy.linkerd.io",
+                "kind": "HTTPRoute",
+                "name": "health-metrics"
+              },
+              "requiredAuthenticationRefs": []
+            }
+          }
+        ])
