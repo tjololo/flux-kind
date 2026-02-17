@@ -4,4 +4,4 @@ resources:
   # - ./gloo
   - ./collector
   - ./traefik
-  - ./kyverno-policies
+  #- ./kyverno-policies
