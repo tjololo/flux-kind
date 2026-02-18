@@ -31,6 +31,13 @@ spec:
           values:
             - kube-system
             - flux-system
+    config:
+      excludeKyvernoNamespace: true
+      resourceFiltersExcludeNamespaces:
+        - kube-system
+        - kube-node-lease
+        - kube-public
+        - flux-system
     features:
       policyExceptions:
         enabled: true
