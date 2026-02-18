@@ -13,14 +13,22 @@ spec:
     - resources:
         kinds:
         - Pod
+        - Deployment
         annotations:
           linkerd.io/inject: enabled
     - resources:
         kinds:
         - Pod
+        - Deployment
         namespaceSelector:
           matchLabels:
             linkerd.io/inject: enabled
+    - resources:
+        kinds:
+        - Pod
+        - Deployment
+        namespaces:
+          - linkerd
   podSecurity:
     - controlName: Capabilities
       images:
