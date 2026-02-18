@@ -33,7 +33,7 @@ spec:
             - flux-system
     config:
       excludeKyvernoNamespace: true
-      resourceFiltersExcludeNamespaces:
+      resourceFiltersIncludeNamespaces:
         - kube-system
         - kube-node-lease
         - kube-public
