@@ -33,4 +33,4 @@ spec:
             - flux-system
     policyExceptions:
       enabled: true
-      namespace: '*'
+      namespace: 'kyverno'
