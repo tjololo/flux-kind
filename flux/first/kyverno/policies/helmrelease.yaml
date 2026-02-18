@@ -23,5 +23,5 @@ spec:
   values:
     podSecurityStandard: baseline
     podSecuritySeverity: medium
-    validationFailureAction: Audit
+    validationFailureAction: Enforce
     background: true
