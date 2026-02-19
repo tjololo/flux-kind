@@ -10,10 +10,10 @@ spec:
   matchConditions:
     - name: namespace-has-linkerd-inject
       expression: >-
-        resource.Get("v1", "namespaces", "", request.namespace).metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled'
+        
     - name: only-except-linkerd-proxy-capabilities
       expression: >-
-         ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (object.metadata.?labels['linkerd.io/inject'].orValue('') == 'enabled') || (request.namespace == 'linkerd')) && (has(object.spec.template) ? (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) : (object.spec.containers + object.spec.?initContainers.orValue([]))).all(c, !c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW']) || c.image.matches('^.*linkerd/proxy.*$'))
+         ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (resource.Get("v1", "namespaces", "", request.namespace).metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (request.namespace == 'linkerd')) && (has(object.spec.template) ? (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) : (object.spec.containers + object.spec.?initContainers.orValue([]))).all(c, !c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW']) || c.image.matches('^.*linkerd/proxy.*$'))
 ---
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
