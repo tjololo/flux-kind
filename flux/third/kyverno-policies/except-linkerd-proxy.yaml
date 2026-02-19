@@ -4,11 +4,6 @@ metadata:
   name: allow-linkerd-capabilities
   namespace: kyverno
 spec:
-  exceptions:
-  - policyName: disallow-capabilities
-    ruleNames:
-    - adding-capabilities
-    - autogen-adding-capabilities
   match:
     any:
     - resources:
@@ -33,11 +28,19 @@ spec:
         - ReplicaSet
         namespaces:
           - linkerd
+  
   podSecurity:
     - controlName: Capabilities
       images:
         - '*/linkerd/proxy*'
       restrictedField: spec.initContainers[*].securityContext.capabilities.add
+      values:
+        - NET_ADMIN
+        - NET_RAW
+    - controlName: Capabilities
+      images:
+        - '*/linkerd/proxy*'
+      restrictedField: spec.containers[*].securityContext.capabilities.add
       values:
         - NET_ADMIN
         - NET_RAW
