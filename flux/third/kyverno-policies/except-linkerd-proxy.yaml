@@ -1,51 +1,26 @@
-apiVersion: kyverno.io/v2
+apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
   name: allow-linkerd-capabilities
   namespace: kyverno
 spec:
-  exceptions:
-  - policyName: disallow-capabilities
-    ruleNames:
-    - adding-capabilities
-    - autogen-adding-capabilities
-  match:
-    any:
-    - resources:
-        kinds:
-        - Pod
-        - Deployment
-        - ReplicaSet
-        annotations:
-          linkerd.io/inject: enabled
-    - resources:
-        kinds:
-        - Pod
-        - Deployment
-        - ReplicaSet
-        namespaceSelector:
-          matchLabels:
-            linkerd.io/inject: enabled
-    - resources:
-        kinds:
-        - Pod
-        - Deployment
-        - ReplicaSet
-        namespaces:
-          - linkerd
-  
-  podSecurity:
-    - controlName: Capabilities
-      images:
-        - '*/linkerd/proxy*'
-      restrictedField: spec.initContainers[*].securityContext.capabilities.add
-      values:
-        - NET_ADMIN
-        - NET_RAW
-    - controlName: Capabilities
-      images:
-        - '*/linkerd/proxy*'
-      restrictedField: spec.containers[*].securityContext.capabilities.add
-      values:
-        - NET_ADMIN
-        - NET_RAW
+  policyRefs:
+  - kind: ValidatingPolicy
+    name: disallow-capabilities
+  matchConditions:
+    - name: check-linkerd-injection
+      expression: >-
+        (object.metadata.?annotations.orValue({}).?['linkerd.io/inject'].orValue('') == 'enabled') ||
+        (object.metadata.?labels.orValue({}).?['linkerd.io/inject'].orValue('') == 'enabled') ||
+        (request.namespace == 'linkerd')
+    - name: check-linkerd-proxy-image
+      expression: >-
+        (has(object.spec.template) ? (
+          (has(object.spec.template.spec.containers) && object.spec.template.spec.containers.exists(c, c.image.matches('linkerd/proxy'))) ||
+          (has(object.spec.template.spec.initContainers) && object.spec.template.spec.initContainers.exists(c, c.image.matches('linkerd/proxy')))
+        ) : (
+          (has(object.spec.containers) && object.spec.containers.exists(c, c.image.matches('linkerd/proxy'))) ||
+          (has(object.spec.initContainers) && object.spec.initContainers.exists(c, c.image.matches('linkerd/proxy')))
+        ))
+  images:
+    - '*/linkerd/proxy*'
