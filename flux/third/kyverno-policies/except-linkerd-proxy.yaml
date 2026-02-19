@@ -9,7 +9,7 @@ spec:
     name: disallow-capabilities
   matchConditions:
     - name: only-except-linkerd-proxy-capabilities
-      expression: >-
+      expression: |
         ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') ||
         (object.metadata.?labels['linkerd.io/inject'].orValue('') == 'enabled') ||
         (request.namespace == 'linkerd'))
