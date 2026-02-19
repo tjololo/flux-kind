@@ -1,23 +1,18 @@
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
-  name: allow-linkerd-capabilities2
+  name: allow-linkerd-capabilities
   namespace: kyverno
 spec:
   policyRefs:
   - kind: ValidatingPolicy
     name: disallow-capabilities
   matchConditions:
+    - name: check-linkerd-injection
+      expression: >-
+        ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (object.metadata.?labels['linkerd.io/inject'].orValue('') == 'enabled') || (request.namespace == 'linkerd'))
     - name: only-except-linkerd-proxy-capabilities
-      expression: |
-        ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') ||
-        (object.metadata.?labels['linkerd.io/inject'].orValue('') == 'enabled') ||
-        (request.namespace == 'linkerd'))
-        &&
-        ((has(object.spec.template) ? 
-          (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) :
-          (object.spec.?containers.orValue([]) + object.spec.?initContainers.orValue([]))
-        ).all(c, 
-          (c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW'])) ? 
-          c.image.matches('.*?/linkerd/proxy.*$') : true
-        ))
+      expression: >-
+        (has(object.spec.template) ? (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) : (object.spec.containers + object.spec.?initContainers.orValue([]))).all(c, !c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW']) || c.image.matches('^.*linkerd/proxy.*$'))
+  images:
+    - '*/linkerd/proxy*'
