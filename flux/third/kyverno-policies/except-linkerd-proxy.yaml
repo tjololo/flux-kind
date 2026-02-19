@@ -1,7 +1,7 @@
 apiVersion: policies.kyverno.io/v1
 kind: PolicyException
 metadata:
-  name: allow-linkerd-capabilities
+  name: allow-linkerd-capabilities2
   namespace: kyverno
 spec:
   policyRefs:
@@ -10,8 +10,8 @@ spec:
   matchConditions:
     - name: check-linkerd-injection
       expression: >-
-        (object.metadata.?annotations.orValue({}).?['linkerd.io/inject'].orValue('') == 'enabled') ||
-        (object.metadata.?labels.orValue({}).?['linkerd.io/inject'].orValue('') == 'enabled') ||
+        (object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') ||
+        (object.metadata.?labels['linkerd.io/inject'].orValue('') == 'enabled') ||
         (request.namespace == 'linkerd')
     - name: only-except-linkerd-proxy-capabilities
       expression: >-
@@ -20,5 +20,5 @@ spec:
           (object.spec.?containers.orValue([]) + object.spec.?initContainers.orValue([]))
         ).all(c, 
           (c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW'])) ? 
-          c.image.matches('.*linkerd/proxy.*') : true
+          c.image.matches('.*?/linkerd/proxy.*$') : true
         )
