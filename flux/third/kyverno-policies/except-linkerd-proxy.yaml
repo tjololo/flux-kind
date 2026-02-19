@@ -13,14 +13,12 @@ spec:
         (object.metadata.?annotations.orValue({}).?['linkerd.io/inject'].orValue('') == 'enabled') ||
         (object.metadata.?labels.orValue({}).?['linkerd.io/inject'].orValue('') == 'enabled') ||
         (request.namespace == 'linkerd')
-    - name: check-linkerd-proxy-image
+    - name: only-except-linkerd-proxy-capabilities
       expression: >-
-        (has(object.spec.template) ? (
-          (has(object.spec.template.spec.containers) && object.spec.template.spec.containers.exists(c, c.image.matches('linkerd/proxy'))) ||
-          (has(object.spec.template.spec.initContainers) && object.spec.template.spec.initContainers.exists(c, c.image.matches('linkerd/proxy')))
-        ) : (
-          (has(object.spec.containers) && object.spec.containers.exists(c, c.image.matches('linkerd/proxy'))) ||
-          (has(object.spec.initContainers) && object.spec.initContainers.exists(c, c.image.matches('linkerd/proxy')))
-        ))
-  images:
-    - '*/linkerd/proxy*'
+        (has(object.spec.template) ? 
+          (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) :
+          (object.spec.?containers.orValue([]) + object.spec.?initContainers.orValue([]))
+        ).all(c, 
+          (c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW'])) ? 
+          c.image.matches('.*linkerd/proxy.*') : true
+        )
