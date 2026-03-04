@@ -8,7 +8,7 @@ spec:
   path: ./flux/2/
   prune: true
   dependsOn:
-    - name: base
+    - name: first
       namespace: flux-system
   sourceRef:
     kind: GitRepository
