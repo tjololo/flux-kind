@@ -13,9 +13,6 @@ spec:
   - kind: ValidatingPolicy
     name: disallow-capabilities
   matchConditions:
-    - name: namespace-has-linkerd-inject
-      expression: >-
-        
     - name: only-except-linkerd-proxy-capabilities
       expression: >-
          ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (resource.Get("v1", "namespaces", "", request.namespace).metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (request.namespace == 'linkerd')) && (has(object.spec.template) ? (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) : (object.spec.containers + object.spec.?initContainers.orValue([]))).all(c, !c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW']) || c.image.matches('^.*linkerd/proxy.*$'))
@@ -30,9 +27,6 @@ spec:
   - kind: ValidatingPolicy
     name: disallow-capabilities
   matchConditions:
-    - name: namespace-has-linkerd-inject
-      expression: >-
-        
     - name: only-except-linkerd-proxy-capabilities
       expression: >-
          ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (resource.Get("v1", "namespaces", "", request.namespace).metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (request.namespace == 'linkerd')) && (has(object.spec.template) ? (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) : (object.spec.containers + object.spec.?initContainers.orValue([]))).all(c, !c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW']) || c.image.matches('^.*linkerd/proxy.*$'))
@@ -47,9 +41,6 @@ spec:
   - kind: ValidatingPolicy
     name: disallow-capabilities
   matchConditions:
-    - name: namespace-has-linkerd-inject
-      expression: >-
-        
     - name: only-except-linkerd-proxy-capabilities
       expression: >-
          ((object.metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (resource.Get("v1", "namespaces", "", request.namespace).metadata.?annotations['linkerd.io/inject'].orValue('') == 'enabled') || (request.namespace == 'linkerd')) && (has(object.spec.template) ? (object.spec.template.spec.containers + object.spec.template.spec.?initContainers.orValue([])) : (object.spec.containers + object.spec.?initContainers.orValue([]))).all(c, !c.?securityContext.?capabilities.?add.orValue([]).exists(cap, cap in ['NET_ADMIN', 'NET_RAW']) || c.image.matches('^.*linkerd/proxy.*$'))
