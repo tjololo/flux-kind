@@ -3,5 +3,4 @@ kind: Kustomization
 resources:
   - traefik-namespace.yaml
   - linkerd-namespace.yaml
-  - limited-namespace.yaml
   - except-linkerd-proxy.yaml
