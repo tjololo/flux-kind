@@ -1,0 +1,16 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: third
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  path: ./flux/3/
+  prune: true
+  dependsOn:
+    - name: first
+      namespace: flux-system
+  sourceRef:
+    kind: GitRepository
+    name: base
+    namespace: flux-system

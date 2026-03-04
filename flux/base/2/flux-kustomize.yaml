@@ -5,10 +5,10 @@ metadata:
   namespace: flux-system
 spec:
   interval: 1m0s
-  path: ./flux/second/
+  path: ./flux/2/
   prune: true
   dependsOn:
-    - name: first
+    - name: base
       namespace: flux-system
   sourceRef:
     kind: GitRepository
