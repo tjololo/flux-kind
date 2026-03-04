@@ -41,6 +41,7 @@ kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system base  --f
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system first  --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system second  --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system third  --for=condition=Ready --timeout=120s
+kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system fourth  --for=condition=Ready --timeout=120s
 kubectl wait helmreleases.helm.toolkit.fluxcd.io -n flux-system traefik --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n limited-services limited-services  --for=condition=Ready --timeout=120s
 kubectl wait --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n traefik-system svc traefik
