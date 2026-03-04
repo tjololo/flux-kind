@@ -7,6 +7,7 @@ spec:
   interval: 1m0s
   path: ./flux/2/
   prune: true
+  wait: true
   dependsOn:
     - name: first
       namespace: flux-system
