@@ -17,6 +17,6 @@ spec:
     - name: web
       protocol: HTTP
       port: 5678
-      allowRoutes:
+      allowedRoutes:
         namespaces:
           from: All
