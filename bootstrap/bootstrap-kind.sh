@@ -25,7 +25,7 @@ EOF
 kubectl config use-context kind-kind
 # kubectl label node kind-control-plane node.kubernetes.io/exclude-from-external-load-balancers-
 echo "Starting cloud-provider-kind"
-sudo cloud-provider-kind 2>/dev/null &
+sudo /Users/vga/development/github/tjololo/cloud-provider-kind/bin/cloud-provider-kind 2>/dev/null &
 CPK_PID=$!
 echo "cloud-provider-kind process started with PID: $CPK_PID"
 flux install
@@ -42,11 +42,17 @@ kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system first  --
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system second  --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system third  --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system fourth  --for=condition=Ready --timeout=120s
+kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n flux-system fifth  --for=condition=Ready --timeout=120s
 kubectl wait helmreleases.helm.toolkit.fluxcd.io -n flux-system traefik --for=condition=Ready --timeout=120s
+kubectl wait helmreleases.helm.toolkit.fluxcd.io -n flux-system envoy-gateway --for=condition=Ready --timeout=120s
 kubectl wait kustomizations.kustomize.toolkit.fluxcd.io -n limited-services limited-services  --for=condition=Ready --timeout=120s
-kubectl wait --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n traefik-system svc traefik
+kubectl wait --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' -n traefik-system svc traefik --timeout=120s
+kubectl wait service envoy-gateway -n envoy-gateway-system --for=condition=Ready --timeout=120s
 sleep 10
-SVC_IP=$(kubectl get service -n traefik-system traefik -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+kubectl wait --for=jsonpath='{.status.loadBalancer.ingress[0].ip}' service -A -l app.kubernetes.io/component=proxy --timeout=120s
+SVC_NS=envoy-gateway-system
+SVC_NAME=$(kubectl get service -A -l app.kubernetes.io/component=proxy -o name)
+SVC_IP=$(kubectl get ${SVC_NAME} -n ${SVC_NS} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 sudo sh -c 'cat <<EOF >> /etc/hosts
 # Kind cluster kind.418.local
 '$SVC_IP' kind.418.local

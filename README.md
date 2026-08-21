@@ -5,5 +5,6 @@ Repo containing resources used to play with flux
 Run the bashscript in the `bootstrap` folder
 
 ```bash
+cd bootstrap
 ./bootstrap-kind.sh
 ```
