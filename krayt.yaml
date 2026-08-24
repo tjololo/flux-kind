@@ -1,4 +1,4 @@
-image: ghcr.io/418-cloud/krayt-agent-claude-code:2.1.226
+image: ghcr.io/tjololo/flux-kind/krayt:sha-00edb65
 # secrets: kind-fluxsecrets.env provide with --secrets
 env:
   CLAUDE_MODEL: claude-sonnet-5
