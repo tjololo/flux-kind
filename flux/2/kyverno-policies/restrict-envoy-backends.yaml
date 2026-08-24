@@ -1,0 +1,48 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: restrict-envoy-backends
+spec:
+  # The Envoy Gateway Backend API can reference arbitrary IPs and unix sockets,
+  # which lets a route reach any Service in the cluster without a ReferenceGrant.
+  # Envoy Gateway therefore ships it disabled and tells admins to fence it off
+  # with RBAC. The application-manager ClusterRole grants backends to the tenant
+  # in limited-services, so this narrows that grant to what the tenant needs:
+  # plain FQDN endpoints pointing outside the cluster.
+  validationActions:
+    - Deny
+  matchConstraints:
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: limited-services
+    resourceRules:
+      - apiGroups: ["gateway.envoyproxy.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["CREATE", "UPDATE"]
+        resources: ["backends"]
+  variables:
+    - name: endpoints
+      expression: "object.spec.?endpoints.orValue([])"
+    - name: hostnames
+      expression: "variables.endpoints.filter(e, has(e.fqdn)).map(e, e.fqdn.hostname.lowerAscii())"
+  validations:
+    - expression: "object.spec.?type.orValue('Endpoints') == 'Endpoints'"
+      message: >-
+        Backend type must be Endpoints. DynamicResolver lets the client pick the
+        destination, which would turn the gateway into an open proxy.
+      reason: Forbidden
+    - expression: "variables.endpoints.all(e, has(e.fqdn))"
+      message: >-
+        Backend endpoints must use fqdn. IP and unix socket endpoints can reach
+        in-cluster Services and the proxy pod itself, bypassing ReferenceGrants.
+      reason: Forbidden
+    - expression: |-
+        variables.hostnames.all(h,
+          h.contains('.') &&
+          !h.endsWith('.svc') && !h.endsWith('.svc.') &&
+          !h.endsWith('.cluster.local') && !h.endsWith('.cluster.local.'))
+      message: >-
+        Backend fqdn hostnames must be external. Cluster-internal names (.svc,
+        .cluster.local, or a single label) must be reached with a Service
+        backendRef so ReferenceGrants still apply.
+      reason: Forbidden

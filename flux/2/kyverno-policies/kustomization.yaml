@@ -4,3 +4,4 @@ resources:
   - traefik-namespace.yaml
   - linkerd-namespace.yaml
   - except-linkerd-proxy.yaml
+  - restrict-envoy-backends.yaml
