@@ -13,14 +13,19 @@ spec:
     - name: linkerd
       namespace: linkerd
   install:
-    crds: Skip
+    crds: CreateReplace
   upgrade:
-    crds: Skip
+    crds: CreateReplace
     strategy:
       name: RetryOnFailure
       retryInterval: 5m
   targetNamespace: envoy-gateway-system
   values:
+    crds:
+      gatewayAPI:
+        enabled: false
+      envoyGateway:
+        enabled: true
     config:
       envoyGateway:
         extensionApis:
