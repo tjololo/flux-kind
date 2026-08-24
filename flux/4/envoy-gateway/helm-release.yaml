@@ -13,19 +13,17 @@ spec:
     - name: linkerd
       namespace: linkerd
   install:
-    crds: CreateReplace
+    # The chart ships both the Gateway API and the Envoy Gateway CRDs in its
+    # crds/ directory, where the crds.gatewayAPI.enabled value cannot gate them.
+    # Both sets are vendored under flux/3 instead so their versions stay ours.
+    crds: Skip
   upgrade:
-    crds: CreateReplace
+    crds: Skip
     strategy:
       name: RetryOnFailure
       retryInterval: 5m
   targetNamespace: envoy-gateway-system
   values:
-    crds:
-      gatewayAPI:
-        enabled: false
-      envoyGateway:
-        enabled: true
     config:
       envoyGateway:
         extensionApis:
