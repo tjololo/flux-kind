@@ -1,0 +1,38 @@
+image: ghcr.io/418-cloud/krayt-agent-claude-code:2.1.226
+# secrets: kind-fluxsecrets.env provide with --secrets
+env:
+  CLAUDE_MODEL: claude-sonnet-5
+  CLAUDE_EFFORT: high
+
+bundle_depth: 0 # full-history bundle
+
+agent:
+  adapter: claude-code
+
+questions:
+  mode: wait # pause on an agent question; resolve with `krayt answer`
+
+network:
+  mode: allowlist
+  mitm: true # terminate TLS at the host proxy for the two injected hosts below (§6.6.1)
+  allow:
+    - api.anthropic.com # Claude Code — credential injected (adapter-supplied rule, see below)
+    - api.github.com # gh CLI — credential injected (network.inject below)
+    - proxy.golang.org # Go module proxy
+    - sum.golang.org # Go checksum db
+    - storage.googleapis.com # Go module blob downloads
+    - cache.nixos.org # Nix binary cache (vendorHash regen)
+    - github.com # Nix flake inputs
+    - codeload.github.com # Nix flake input tarballs
+    - dl.k8s.io
+    - ghcr.io
+
+  passthrough:
+    - proxy.golang.org
+    - sum.golang.org
+    - storage.googleapis.com
+    - cache.nixos.org
+    - github.com
+    - codeload.github.com
+    - dl.k8s.io
+    - ghcr.io
