@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/^images/krayt/Dockerfile$/"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\s+ARG KUBECTL_VERSION=(?<currentValue>.*?)\\s"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDepNames": ["kubernetes/kubernetes"],
+      "automerge": false
+    }
+  ]
+}
