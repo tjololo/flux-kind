@@ -20,4 +20,8 @@ spec:
       name: RetryOnFailure
       retryInterval: 5m
   targetNamespace: envoy-gateway-system
-  values: {}
+  values:
+    config:
+      envoyGateway:
+        extensionApis:
+          enableBackend: true
