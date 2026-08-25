@@ -28,3 +28,8 @@ spec:
       envoyGateway:
         extensionApis:
           enableBackend: true
+        rateLimit:
+          backend:
+            type: Redis
+            redis:
+              url: valkey.valkey-system.svc.cluster.local:6379
