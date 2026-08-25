@@ -5,3 +5,4 @@ resources:
   - ./envoy-gateway-crds
   - ./linkerd
   - ./otel
+  - ./valkey
