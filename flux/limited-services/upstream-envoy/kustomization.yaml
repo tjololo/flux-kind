@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - upstream-api.yaml
   - upstream-web.yaml
+  - upstream-api-security.yaml
