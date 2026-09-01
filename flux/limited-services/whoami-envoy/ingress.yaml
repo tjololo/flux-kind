@@ -5,7 +5,7 @@ metadata:
   namespace: limited-services
 spec:
   hostnames:
-    - "kind.418.local"
+    - "kind.418.test"
   parentRefs:
     - name: eg
       namespace: envoy-gateway-system

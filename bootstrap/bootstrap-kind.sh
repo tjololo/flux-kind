@@ -54,12 +54,12 @@ SVC_NS=envoy-gateway-system
 SVC_NAME=$(kubectl get service -A -l app.kubernetes.io/component=proxy -o name)
 SVC_IP=$(kubectl get ${SVC_NAME} -n ${SVC_NS} -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
 sudo sh -c 'cat <<EOF >> /etc/hosts
-# Kind cluster kind.418.local
-'$SVC_IP' kind.418.local
+# Kind cluster kind.418.test
+'$SVC_IP' kind.418.test
 EOF'
 trap "cleanup '$CPK_PID' '$SVC_IP'" EXIT INT TERM
 
 echo "Everything should be running." 
-echo "whoami service shoudl be available on http://kind.418.local:5678/whoami"
+echo "whoami service shoudl be available on http://kind.418.test:5678/whoami"
 echo "Press enter to cleanup"
 read fake_wait
