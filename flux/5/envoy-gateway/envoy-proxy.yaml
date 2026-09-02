@@ -1,0 +1,18 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: eg-linkerd
+  namespace: envoy-gateway-system
+spec:
+  # Route to the backend Service ClusterIP instead of the pod endpoints. The
+  # linkerd-proxy only gets a service-level destination lookup - and with it
+  # mTLS, load balancing and policy - when the connection targets a ClusterIP.
+  # Endpoint routing (the default) hands it raw pod IPs, which bypasses that.
+  routingType: Service
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        pod:
+          annotations:
+            linkerd.io/inject: enabled

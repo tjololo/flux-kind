@@ -2,5 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: envoy-gateway-system
-  annotations:
-    linkerd.io/inject: enabled
+  # Deliberately NOT annotated with linkerd.io/inject: enabled. The chart runs a
+  # certgen Job (a Helm pre-install/pre-upgrade hook) and a sidecar keeps that
+  # pod Running forever, so the hook never completes and the release times out.
+  # The Envoy data plane is meshed instead via the EnvoyProxy resource in flux/5.
