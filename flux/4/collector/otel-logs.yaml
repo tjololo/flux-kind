@@ -1,0 +1,100 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-logs
+  namespace: otel-col
+spec:
+  image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.140.1
+  podAnnotations:
+    cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+    linkerd.io/inject: "enabled"
+  resources:
+    limits:
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  mode: daemonset
+  upgradeStrategy: automatic
+  serviceAccount: otel-collector
+  observability:
+    metrics:
+      disablePrometheusAnnotations: true
+      enableMetrics: true
+  # kubelet writes every container's log file under /var/log/pods on the
+  # node it's running on - this needs a hostPath mount to read it, which is
+  # why this is a daemonset and why it needs the PolicyException in
+  # flux/2/kyverno-policies/except-hostpath-otel-logs.yaml.
+  volumes:
+    - name: varlogpods
+      hostPath:
+        path: /var/log/pods
+  volumeMounts:
+    - name: varlogpods
+      mountPath: /var/log/pods
+      readOnly: true
+  config:
+    receivers:
+      filelog:
+        include:
+          - /var/log/pods/*/*/*.log
+        start_at: end
+        include_file_path: true
+        include_file_name: false
+        operators:
+          # Parses the kubelet's log file naming convention
+          # (<namespace>_<pod>_<uid>/<container>/<restart count>.log) plus
+          # the cri/docker log line format in one step, setting
+          # k8s.namespace.name/k8s.pod.name/k8s.pod.uid/k8s.container.name
+          # straight from the file path - no separate regex parser needed.
+          - type: container
+            id: container-parser
+    processors:
+      batch: {}
+      # Same processor as the trace/metric collector in otel.yaml, kept in
+      # sync deliberately - the container operator above already populates
+      # the resource attributes its pod_association rules match on.
+      k8sattributes:
+        auth_type: 'serviceAccount'
+        wait_for_metadata: true
+        wait_for_metadata_timeout: 10s
+        extract:
+          metadata:
+            - k8s.namespace.name
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.deployment.name
+            - k8s.job.name
+            - k8s.cronjob.name
+            - k8s.daemonset.name
+            - k8s.node.name
+            - service.name
+          labels:
+            - tag_name: otel.sampling
+              key: otel/sampling
+              from: deployment
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.ip
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+          - sources:
+              - from: connection
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+
+    exporters:
+      debug: {}
+      otlphttp/loki:
+        endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
+
+    service:
+      pipelines:
+        logs:
+          receivers: [filelog]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [debug, otlphttp/loki]

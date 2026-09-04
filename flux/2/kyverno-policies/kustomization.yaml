@@ -4,5 +4,7 @@ resources:
   - traefik-namespace.yaml
   - envoy-namespace.yaml
   - linkerd-namespace.yaml
+  - monitoring-namespace.yaml
   - except-linkerd-proxy.yaml
+  - except-hostpath-otel-logs.yaml
   - restrict-envoy-backends.yaml

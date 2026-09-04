@@ -1,0 +1,17 @@
+# The daemonset log collector (flux/4/collector/otel-logs.yaml) needs hostPath
+# volumes to tail /var/log/pods from each node. PSS baseline forbids hostPath
+# volumes outright, so it needs its own exception separate from the linkerd
+# capabilities one above.
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: allow-otel-logs-hostpath
+  namespace: otel-col
+spec:
+  policyRefs:
+  - kind: ValidatingPolicy
+    name: disallow-host-path
+  matchConditions:
+    - name: only-hostpath-volumes
+      expression: >-
+         (has(object.spec.template) ? object.spec.template.spec.?volumes.orValue([]) : object.spec.?volumes.orValue([])).exists(v, has(v.hostPath))

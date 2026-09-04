@@ -1,0 +1,77 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: grafana
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      chart: grafana
+      version: 10.5.15
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+  releaseName: grafana
+  dependsOn:
+    - name: linkerd
+      namespace: linkerd
+    - name: mimir
+      namespace: flux-system
+    - name: loki
+      namespace: flux-system
+    - name: tempo
+      namespace: flux-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  targetNamespace: monitoring
+  interval: 1h
+  timeout: 5m
+  values:
+    # Deliberately no adminPassword here - the chart generates one into its
+    # own Secret instead of putting anything sensitive in git. Read it back
+    # with:
+    #   kubectl get secret -n monitoring grafana -o jsonpath='{.data.admin-password}' | base64 -d
+    grafana.ini:
+      server:
+        # This repo fronts everything on one hostname with path prefixes
+        # rather than subdomains (see flux/limited-services/whoami-envoy).
+        root_url: "%(protocol)s://%(domain)s:5678/grafana"
+        domain: kind.418.test
+        serve_from_sub_path: true
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Mimir
+            uid: mimir
+            type: prometheus
+            access: proxy
+            url: http://mimir-nginx.monitoring.svc.cluster.local/prometheus
+            isDefault: true
+          - name: Loki
+            uid: loki
+            type: loki
+            access: proxy
+            url: http://loki-gateway.monitoring.svc.cluster.local
+            jsonData:
+              derivedFields:
+                - datasourceUid: tempo
+                  matcherRegex: "trace_id=(\\w+)"
+                  name: TraceID
+                  url: "${__value.raw}"
+          - name: Tempo
+            uid: tempo
+            type: tempo
+            access: proxy
+            url: http://tempo.monitoring.svc.cluster.local:3100
+            jsonData:
+              tracesToLogsV2:
+                datasourceUid: loki
+                filterByTraceID: false
+                filterBySpanID: false
+              tracesToMetrics:
+                datasourceUid: mimir

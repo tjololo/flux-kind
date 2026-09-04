@@ -1,0 +1,82 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: tempo
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      # The monolithic chart, not tempo-distributed - this is a 3-worker kind
+      # cluster, one Tempo process is plenty.
+      chart: tempo
+      version: 1.23.3
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+  releaseName: tempo
+  dependsOn:
+    - name: linkerd
+      namespace: linkerd
+    - name: minio
+      namespace: flux-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  targetNamespace: monitoring
+  interval: 1h
+  timeout: 5m
+  values:
+    replicas: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        memory: 512Mi
+    persistence:
+      # WAL storage ahead of the S3 flush. RWO on local-path is fine for a
+      # single Tempo replica.
+      enabled: true
+      storageClassName: standard
+      size: 5Gi
+
+    tempo:
+      # Chart 1.23 moved the query port from 3100 to 3200 by default; pinned
+      # back to 3100 here to match the Grafana datasource wired up in flux/5.
+      server:
+        http_listen_port: 3100
+      storage:
+        trace:
+          backend: s3
+          s3:
+            endpoint: minio.monitoring.svc.cluster.local:9000
+            bucket: tempo-traces
+            access_key: minioadmin
+            secret_key: minioadmin123
+            forcepathstyle: true
+            # Shared MinIO has no TLS in this kind cluster.
+            insecure: true
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+      # Turns spans into RED/service-graph metrics for the default tenant -
+      # metricsGenerator.enabled below only starts the component, this is
+      # what actually makes it process anything.
+      overrides:
+        defaults:
+          metrics_generator:
+            processors:
+              - service-graphs
+              - span-metrics
+
+    # Modest enough to fit the resource budget, and lets Explore -> Tempo ->
+    # "tracesToMetrics" in Grafana actually return something.
+    metricsGenerator:
+      enabled: true
+      remoteWriteUrl: "http://mimir-nginx.monitoring.svc.cluster.local/prometheus/api/v1/push"

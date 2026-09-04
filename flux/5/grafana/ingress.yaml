@@ -1,0 +1,24 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  hostnames:
+    - "kind.418.test"
+  parentRefs:
+    - name: eg
+      namespace: envoy-gateway-system
+      sectionName: web
+  rules:
+    - matches:
+      - path:
+          type: PathPrefix
+          value: /grafana
+      # No URLRewrite: server.serve_from_sub_path in grafana.ini makes Grafana
+      # itself serve everything under /grafana, unlike whoami which needs the
+      # prefix stripped.
+      backendRefs:
+        - name: grafana
+          namespace: monitoring
+          port: 80

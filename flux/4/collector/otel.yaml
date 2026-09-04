@@ -8,6 +8,10 @@ spec:
   podAnnotations:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
     linkerd.io/inject: "enabled"
+    # Only bypasses the mesh for outbound 443 (some external HTTPS call this
+    # collector already makes). Mimir/Loki/Tempo are all in-mesh on 80,
+    # 4317 and 3100 respectively, so they still get intercepted and meshed
+    # normally - nothing to add here for them.
     config.linkerd.io/skip-outbound-ports: "443"
   resources:
     limits:
@@ -30,6 +34,54 @@ spec:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      # Scrapes that don't fit the otlp receiver: things that only speak
+      # Prometheus exposition and were never going to push to us.
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: linkerd-proxy
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                # Only the linkerd-proxy sidecar container...
+                - source_labels: [__meta_kubernetes_pod_container_name]
+                  action: keep
+                  regex: ^linkerd-proxy$
+                # ...on its named admin port (4191) - role: pod already
+                # builds __address__ as <pod_ip>:<that port> once matched.
+                - source_labels: [__meta_kubernetes_pod_container_port_name]
+                  action: keep
+                  regex: ^linkerd-admin$
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+              metrics_path: /metrics
+            - job_name: envoy-gateway
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                      - envoy-gateway-system
+              relabel_configs:
+                # envoy-gateway-system also holds the (unmeshed) control
+                # plane pod - keep only the data-plane pods Envoy Gateway
+                # itself manages for a Gateway.
+                - source_labels: [__meta_kubernetes_pod_label_gateway_envoyproxy_io_owning_gateway_name]
+                  action: keep
+                  regex: .+
+                # Envoy's admin listener isn't exposed as a named container
+                # port, so point directly at its default port.
+                - source_labels: [__meta_kubernetes_pod_ip]
+                  action: replace
+                  regex: (.+)
+                  target_label: __address__
+                  replacement: '${1}:19000'
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+              metrics_path: /stats/prometheus
     processors:
       batch: {}
       # Extract k8s attributes
@@ -164,19 +216,32 @@ spec:
         spike_limit_percentage: 15
 
     exporters:
+      # Kept alongside the real exporters below for local troubleshooting.
       debug: {}
+      otlphttp/mimir:
+        # otlphttp appends /v1/metrics itself, landing on Mimir's OTLP
+        # ingestion endpoint at /otlp/v1/metrics.
+        endpoint: http://mimir-nginx.monitoring.svc.cluster.local/otlp
+      otlp/tempo:
+        endpoint: tempo.monitoring.svc.cluster.local:4317
+        tls:
+          insecure: true
+      otlphttp/loki:
+        # Same story as Mimir: this lands on Loki's OTLP endpoint at
+        # /otlp/v1/logs.
+        endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
 
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [memory_limiter, k8sattributes, transform/sampling, tail_sampling, batch]
-          exporters: [debug]
+          exporters: [debug, otlp/tempo]
         logs:
           receivers: [otlp]
           processors: [filter/logs, memory_limiter, k8sattributes, batch]
-          exporters: [debug]
+          exporters: [debug, otlphttp/loki]
         metrics:
-          receivers: [otlp]
+          receivers: [otlp, prometheus]
           processors: [memory_limiter, k8sattributes, batch]
-          exporters: [debug]
+          exporters: [debug, otlphttp/mimir]

@@ -1,0 +1,160 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: mimir
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      chart: mimir-distributed
+      version: 6.2.0
+      sourceRef:
+        kind: HelmRepository
+        name: grafana
+        namespace: flux-system
+  releaseName: mimir
+  dependsOn:
+    - name: linkerd
+      namespace: linkerd
+    - name: minio
+      namespace: flux-system
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  targetNamespace: monitoring
+  interval: 1h
+  timeout: 5m
+  values:
+    # This chart bundles its own minio subchart by default (that's where
+    # small.yaml's storage config points). We share one MinIO across Mimir,
+    # Loki and Tempo instead, so it's disabled here.
+    minio:
+      enabled: false
+
+    mimir:
+      structuredConfig:
+        multitenancy_enabled: false
+        common:
+          storage:
+            backend: s3
+            s3:
+              endpoint: minio.monitoring.svc.cluster.local:9000
+              access_key_id: minioadmin
+              secret_access_key: minioadmin123
+              # Shared MinIO has no TLS in this kind cluster.
+              insecure: true
+        blocks_storage:
+          s3:
+            bucket_name: mimir-blocks
+        ruler_storage:
+          s3:
+            bucket_name: mimir-ruler
+        alertmanager_storage:
+          s3:
+            bucket_name: mimir-alertmanager
+
+    # Everything below is small.yaml's capacity plan
+    # (https://grafana.com/docs/mimir/latest/references/architecture/deployment-modes/),
+    # with every component forced to 1 replica and requests cut down - this is
+    # a 3-worker kind cluster, not the multi-node setup small.yaml is sized for.
+    ingester:
+      replicas: 1
+      zoneAwareReplication:
+        enabled: false
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+        limits:
+          memory: 1Gi
+    distributor:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+    querier:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+    query_frontend:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+    query_scheduler:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+    store_gateway:
+      replicas: 1
+      zoneAwareReplication:
+        enabled: false
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+    compactor:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+    ruler:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 50m
+          memory: 128Mi
+        limits:
+          memory: 256Mi
+    alertmanager:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 25m
+          memory: 64Mi
+        limits:
+          memory: 128Mi
+    overrides_exporter:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+    nginx:
+      replicas: 1
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+
+    # small.yaml fronts blocks/index/chunk/metadata lookups with memcached
+    # tiers. Cut for the kind cluster resource budget - Mimir works fine
+    # without them, just slower on repeat queries.
+    chunksCache:
+      enabled: false
+    indexCache:
+      enabled: false
+    metadataCache:
+      enabled: false
+    resultsCache:
+      enabled: false

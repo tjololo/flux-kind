@@ -5,3 +5,7 @@ resources:
   - ./collector
   # - ./traefik
   - ./envoy-gateway
+  - ./minio
+  - ./mimir
+  - ./loki
+  - ./tempo

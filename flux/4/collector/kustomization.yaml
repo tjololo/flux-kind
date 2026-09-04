@@ -5,3 +5,4 @@ resources:
   - sa.yaml
   - sa-rbac.yaml
   - otel.yaml
+  - otel-logs.yaml

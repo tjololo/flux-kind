@@ -49,7 +49,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: otel-collector
-    namespace: monitoring
+    namespace: otel-col
 roleRef:
   kind: ClusterRole
   name: otel-collector

@@ -1,0 +1,77 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: minio
+  namespace: flux-system
+spec:
+  chart:
+    spec:
+      chart: minio
+      version: 5.4.0
+      sourceRef:
+        kind: HelmRepository
+        name: minio
+        namespace: flux-system
+  releaseName: minio
+  dependsOn:
+    - name: linkerd
+      namespace: linkerd
+  install:
+    crds: CreateReplace
+  upgrade:
+    crds: CreateReplace
+  targetNamespace: monitoring
+  interval: 1h
+  timeout: 5m
+  values:
+    mode: standalone
+    replicas: 1
+    persistence:
+      enabled: true
+      # kind's default StorageClass, backed by rancher local-path-provisioner.
+      # RWO + WaitForFirstConsumer, fine for a single-replica standalone MinIO.
+      storageClass: standard
+      size: 10Gi
+    resources:
+      # 3-worker kind cluster, shrunk well below the chart's defaults.
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        memory: 1Gi
+    # Dev credentials for a local kind cluster only. This repo has no
+    # sops/sealed-secrets, so there's nowhere else to put these; do not reuse
+    # them outside kind. Mimir, Loki and Tempo reference the same values.
+    rootUser: minioadmin
+    rootPassword: minioadmin123
+    buckets:
+      - name: mimir-blocks
+        policy: none
+        purge: false
+      - name: mimir-ruler
+        policy: none
+        purge: false
+      - name: mimir-alertmanager
+        policy: none
+        purge: false
+      - name: loki-chunks
+        policy: none
+        purge: false
+      - name: loki-ruler
+        policy: none
+        purge: false
+      - name: loki-admin
+        policy: none
+        purge: false
+      - name: tempo-traces
+        policy: none
+        purge: false
+    postJob:
+      podAnnotations:
+        # The bucket-creation job is a Helm post-install hook Pod. A linkerd
+        # sidecar has no way to be told "this container exited, you can too",
+        # so it keeps the hook Pod Running forever and the HelmRelease times
+        # out waiting for the Job to complete. Same failure as the certgen
+        # hook documented in flux/2/kyverno-policies/envoy-namespace.yaml -
+        # opt this one Pod out of the mesh instead.
+        linkerd.io/inject: "disabled"
