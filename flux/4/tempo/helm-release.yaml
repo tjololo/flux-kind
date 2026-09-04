@@ -29,12 +29,6 @@ spec:
   timeout: 5m
   values:
     replicas: 1
-    resources:
-      requests:
-        cpu: 100m
-        memory: 256Mi
-      limits:
-        memory: 512Mi
     persistence:
       # WAL storage ahead of the S3 flush. RWO on local-path is fine for a
       # single Tempo replica.
@@ -43,10 +37,17 @@ spec:
       size: 5Gi
 
     tempo:
-      # Chart 1.23 moved the query port from 3100 to 3200 by default; pinned
-      # back to 3100 here to match the Grafana datasource wired up in flux/5.
-      server:
-        http_listen_port: 3100
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          memory: 512Mi
+      # Leave server.http_listen_port at the chart default of 3200. The
+      # Service ports and the liveness/readiness probes are hardcoded to 3200
+      # in this chart, so moving the listener to 3100 only makes the probes
+      # fail and the container get killed ~50s after it starts. Grafana's
+      # datasource in flux/5 points at 3200 to match.
       storage:
         trace:
           backend: s3
@@ -75,8 +76,8 @@ spec:
               - service-graphs
               - span-metrics
 
-    # Modest enough to fit the resource budget, and lets Explore -> Tempo ->
-    # "tracesToMetrics" in Grafana actually return something.
-    metricsGenerator:
-      enabled: true
-      remoteWriteUrl: "http://mimir-nginx.monitoring.svc.cluster.local/prometheus/api/v1/push"
+      # Modest enough to fit the resource budget, and lets Explore -> Tempo ->
+      # "tracesToMetrics" in Grafana actually return something.
+      metricsGenerator:
+        enabled: true
+        remoteWriteUrl: "http://mimir-nginx.monitoring.svc.cluster.local/prometheus/api/v1/push"
