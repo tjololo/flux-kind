@@ -23,6 +23,14 @@ spec:
     remediation:
       retries: 5
   values:
+    # Kyverno caches API discovery and only invalidates it every 15m. The Envoy Gateway
+    # CRDs are installed in wave 3, after Kyverno starts in wave 1, so without this the
+    # fail-closed vpol webhook cannot resolve backends.gateway.envoyproxy.io and denies
+    # every Backend the limited-services tenant applies. See kyverno/kyverno#10729.
+    global:
+      crdWatcher: true
+    admissionController:
+      crdWatcher: true
     webhooks:
       namespaceSelector:
         matchExpressions:
