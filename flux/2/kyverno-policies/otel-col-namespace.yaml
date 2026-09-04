@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: otel-col
+  # Created here in wave 2 rather than next to the collectors in flux/4, because
+  # the two PolicyExceptions this namespace needs (except-linkerd-proxy.yaml and
+  # except-hostpath-otel-logs.yaml) are namespaced objects that live in wave 2.
+  # Wave 2 runs with wait: true, so a PolicyException pointing at a namespace that
+  # only appears in wave 4 doesn't just fail on its own - it keeps "second" from
+  # ever going Ready and deadlocks every later wave behind it.
+  #
+  # Deliberately NOT annotated with linkerd.io/inject: enabled. The collectors are
+  # meshed per-pod via podAnnotations on the OpenTelemetryCollector CRs, and the
+  # deployment collector additionally needs config.linkerd.io/skip-outbound-ports.

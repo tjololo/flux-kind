@@ -1,0 +1,16 @@
+# Shared by four HelmReleases across two waves: mimir, loki and tempo in flux/4,
+# and grafana in flux/5. Every other component in this repo owns its own
+# helm-repository.yaml, but a HelmRepository is a single cluster object - four
+# copies of source.toolkit.fluxcd.io/v1 HelmRepository flux-system/grafana is a
+# duplicate resource id that kustomize refuses to build, and across waves it
+# would flap the Flux owner labels between "fourth" and "fifth" on every
+# reconcile. Declared once here instead; wave 5 depends on wave 4, so it always
+# exists by the time flux/5/grafana references it.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: HelmRepository
+metadata:
+  name: grafana
+  namespace: flux-system
+spec:
+  interval: 1h
+  url: https://grafana.github.io/helm-charts

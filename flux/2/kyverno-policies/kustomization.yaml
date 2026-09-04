@@ -5,6 +5,7 @@ resources:
   - envoy-namespace.yaml
   - linkerd-namespace.yaml
   - monitoring-namespace.yaml
+  - otel-col-namespace.yaml
   - except-linkerd-proxy.yaml
   - except-hostpath-otel-logs.yaml
   - restrict-envoy-backends.yaml

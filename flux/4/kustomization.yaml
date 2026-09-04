@@ -5,6 +5,7 @@ resources:
   - ./collector
   # - ./traefik
   - ./envoy-gateway
+  - ./grafana-charts
   - ./minio
   - ./mimir
   - ./loki
