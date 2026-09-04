@@ -9,9 +9,9 @@ spec:
     cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
     linkerd.io/inject: "enabled"
     # Only bypasses the mesh for outbound 443 (some external HTTPS call this
-    # collector already makes). Mimir/Loki/Tempo are all in-mesh on 80,
-    # 4317 and 3100 respectively, so they still get intercepted and meshed
-    # normally - nothing to add here for them.
+    # collector already makes). Mimir and Loki are in-mesh on 80 and Tempo on
+    # 4317, so they still get intercepted and meshed normally - nothing to add
+    # here for them.
     config.linkerd.io/skip-outbound-ports: "443"
   resources:
     limits:
@@ -76,7 +76,7 @@ spec:
                   action: replace
                   regex: (.+)
                   target_label: __address__
-                  replacement: '${1}:19000'
+                  replacement: '$${1}:19000'
                 - source_labels: [__meta_kubernetes_namespace]
                   target_label: namespace
                 - source_labels: [__meta_kubernetes_pod_name]
