@@ -9,6 +9,14 @@ spec:
   # mTLS, load balancing and policy - when the connection targets a ClusterIP.
   # Endpoint routing (the default) hands it raw pod IPs, which bypasses that.
   routingType: Service
+  # Envoy flushes its whole stats set to every metrics sink every 5s by
+  # default. That is far more than this cluster needs and it was enough to
+  # overrun the collector's Mimir sending queue on its own, so stretch it to
+  # the interval the Prometheus scrape used to run at.
+  bootstrap:
+    type: Merge
+    value: |
+      stats_flush_interval: 60s
   provider:
     type: Kubernetes
     kubernetes:
@@ -18,6 +26,61 @@ spec:
             linkerd.io/inject: enabled
   telemetry:
     metrics:
+      # Without this Envoy generates every stat it knows about - thousands of
+      # series per proxy pod, most of them histogram buckets nothing queries.
+      # An inclusion list keeps the golden signals and drops the rest, which
+      # also saves Envoy's own CPU and memory. Anything not matched here stops
+      # existing, so add to the list rather than trimming it if a dashboard
+      # goes blank.
+      matches:
+        # Cluster health. Envoy Gateway explicitly warns against dropping
+        # these - warming_clusters and the membership gauges are load-bearing
+        # for the control plane, not just dashboards.
+        - type: Exact
+          value: cluster_manager.warming_clusters
+        - type: Suffix
+          value: membership_total
+        - type: Suffix
+          value: membership_healthy
+        - type: Suffix
+          value: membership_degraded
+        # Upstream (per cluster) request and connection signals.
+        - type: Suffix
+          value: upstream_rq_total
+        - type: Suffix
+          value: upstream_rq_time
+        - type: Suffix
+          value: upstream_rq_2xx
+        - type: Suffix
+          value: upstream_rq_4xx
+        - type: Suffix
+          value: upstream_rq_5xx
+        - type: Suffix
+          value: upstream_rq_pending_overflow
+        - type: Suffix
+          value: upstream_cx_active
+        - type: Suffix
+          value: upstream_cx_connect_fail
+        # Downstream (per listener / HTTP connection manager) signals.
+        - type: Suffix
+          value: downstream_rq_total
+        - type: Suffix
+          value: downstream_rq_time
+        - type: Suffix
+          value: downstream_rq_2xx
+        - type: Suffix
+          value: downstream_rq_3xx
+        - type: Suffix
+          value: downstream_rq_4xx
+        - type: Suffix
+          value: downstream_rq_5xx
+        - type: Suffix
+          value: downstream_cx_active
+        - type: Suffix
+          value: downstream_cx_total
+        # Proxy process health - uptime, memory, concurrency. Low cardinality.
+        - type: Prefix
+          value: server.
       sinks:
         - type: OpenTelemetry
           openTelemetry:

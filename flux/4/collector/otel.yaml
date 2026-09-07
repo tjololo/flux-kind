@@ -57,33 +57,16 @@ spec:
                 - source_labels: [__meta_kubernetes_pod_name]
                   target_label: pod
               metrics_path: /metrics
-            - job_name: envoy-gateway
-              kubernetes_sd_configs:
-                - role: pod
-                  namespaces:
-                    names:
-                      - envoy-gateway-system
-              relabel_configs:
-                # envoy-gateway-system also holds the (unmeshed) control
-                # plane pod - keep only the data-plane pods Envoy Gateway
-                # itself manages for a Gateway.
-                - source_labels: [__meta_kubernetes_pod_label_gateway_envoyproxy_io_owning_gateway_name]
-                  action: keep
-                  regex: .+
-                # Envoy's admin listener isn't exposed as a named container
-                # port, so point directly at its default port.
-                - source_labels: [__meta_kubernetes_pod_ip]
-                  action: replace
-                  regex: (.+)
-                  target_label: __address__
-                  replacement: '$${1}:19000'
-                - source_labels: [__meta_kubernetes_namespace]
-                  target_label: namespace
-                - source_labels: [__meta_kubernetes_pod_name]
-                  target_label: pod
-              metrics_path: /stats/prometheus
     processors:
       batch: {}
+      # Metrics arrive as a steady high-volume stream rather than the bursty
+      # traffic the shared batch's 200ms default is tuned for. Waiting longer
+      # per batch cuts the request rate into Mimir by an order of magnitude,
+      # which is what actually keeps the sending queue drained.
+      batch/metrics:
+        timeout: 5s
+        send_batch_size: 2000
+        send_batch_max_size: 3000
       # Extract k8s attributes
       k8sattributes:
         auth_type: 'serviceAccount'
@@ -222,6 +205,23 @@ spec:
         # otlphttp appends /v1/metrics itself, landing on Mimir's OTLP
         # ingestion endpoint at /otlp/v1/metrics.
         endpoint: http://mimir-nginx.monitoring.svc.cluster.local/otlp
+        # A single-replica Mimir on kind absorbs a write burst much slower
+        # than this collector can produce one, so the defaults (queue_size
+        # 1000, num_consumers 10) overflow and the exporter starts logging
+        # "sending queue is full" while dropping whole batches. More
+        # in-flight requests plus a deeper queue rides out the bursts.
+        sending_queue:
+          enabled: true
+          num_consumers: 20
+          queue_size: 10000
+        retry_on_failure:
+          enabled: true
+          initial_interval: 1s
+          max_interval: 30s
+          # Past this, keeping a batch alive only starves fresher data of
+          # queue slots - Mimir would reject it as too old anyway.
+          max_elapsed_time: 120s
+        timeout: 30s
       otlp/tempo:
         endpoint: tempo.monitoring.svc.cluster.local:4317
         tls:
@@ -243,5 +243,7 @@ spec:
           exporters: [debug, otlphttp/loki]
         metrics:
           receivers: [otlp, prometheus]
-          processors: [memory_limiter, k8sattributes, batch]
-          exporters: [debug, otlphttp/mimir]
+          processors: [memory_limiter, k8sattributes, batch/metrics]
+          # No debug exporter here: at this volume it is the noisiest thing
+          # in the collector's own logs. Re-add it when troubleshooting.
+          exporters: [otlphttp/mimir]
