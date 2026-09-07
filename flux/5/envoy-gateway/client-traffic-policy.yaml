@@ -1,0 +1,42 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: eg-client-ip
+  namespace: envoy-gateway-system
+spec:
+  # Attaches to the whole Gateway rather than one listener - client IP
+  # detection is a property of how traffic reaches us, not of any single
+  # route, and every listener added later should inherit it.
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: eg
+  clientIPDetection:
+    # Use the TCP peer of the connection Envoy terminates.
+    #
+    # This is the only safe option for the current topology. Nothing
+    # trustworthy sits in front of this Gateway - traffic arrives straight
+    # from the kind host port mapping - so there is no proxy whose
+    # X-Forwarded-For could be believed. Turning on xForwardedFor here would
+    # mean trusting a header any client can set, which is worse than having
+    # no client IP detection at all: it would let an attacker choose the
+    # address that geo rules, CIDR denies and rate limit buckets are keyed
+    # on, and forge a different one per request to evade all three.
+    #
+    # Note this is exactly as accurate as the network makes it. If the Envoy
+    # Service SNATs (the default for NodePort/LoadBalancer without
+    # externalTrafficPolicy: Local), every request will appear to come from
+    # a node address and every per-client rule will collapse into one bucket.
+    # Verify with an access log or `%DOWNSTREAM_REMOTE_ADDRESS%` before
+    # trusting anything built on top of it.
+    #
+    # When a real load balancer or CDN is put in front, switch to:
+    #
+    #   xForwardedFor:
+    #     trustedCIDRs:
+    #       - <the LB/CDN egress ranges>
+    #
+    # Prefer trustedCIDRs over numTrustedHops - hop counting can be shifted
+    # by an attacker appending their own XFF entries, while a CIDR allowlist
+    # names the proxies you actually trust. The CRD rejects both at once.
+    directSourceIP: {}
