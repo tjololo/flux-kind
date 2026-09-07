@@ -89,6 +89,23 @@ spec:
             # Envoy's stats apart from application OTLP so it can namespace
             # them as envoy.*. Tracing below still goes to 4317.
             port: 4319
+            # Declare pod identity at the source so k8sattributes has
+            # something to match on. It cannot use `from: connection` for
+            # this sink - the collector is meshed, so Linkerd has replaced
+            # the peer address before the collector sees it, and association
+            # resolves to the collector's own pod instead of ours.
+            #
+            # UNVERIFIED: the CRD types these values as plain strings and
+            # documents no templating, so %ENV()% may well arrive as a
+            # literal. The env vars themselves definitely exist - the
+            # tracing customTags below read the same two. If substitution
+            # does not happen, k8sattributes/envoy simply finds no matching
+            # pod and adds nothing, which is the intended failure mode.
+            resourceAttributes:
+              k8s.pod.name: "%ENV(ENVOY_POD_NAME)%"
+              k8s.namespace.name: "%ENV(ENVOY_POD_NAMESPACE)%"
+              # Static, so this one is reliable either way.
+              service.name: envoy-gateway
     tracing:
       # sample 100% of requests
       samplingRate: 100
