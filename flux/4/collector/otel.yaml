@@ -80,28 +80,6 @@ spec:
             match_type: regexp
             action: update
             new_name: envoy.$${1}
-      # A separate k8sattributes for the Envoy metrics pipeline. Identical
-      # extraction to the shared one, but it associates ONLY on the pod
-      # name/namespace pair Envoy declares in its sink resourceAttributes.
-      # Crucially it omits `from: connection`: that fallback is what stamped
-      # every Envoy metric with the collector's own pod identity, since a
-      # meshed collector never sees the real peer address. With no fallback,
-      # a failed match yields no k8s metadata rather than wrong metadata.
-      k8sattributes/envoy:
-        auth_type: 'serviceAccount'
-        extract:
-          metadata:
-            - k8s.namespace.name
-            - k8s.pod.name
-            - k8s.pod.uid
-            - k8s.deployment.name
-            - k8s.node.name
-        pod_association:
-          - sources:
-              - from: resource_attribute
-                name: k8s.pod.name
-              - from: resource_attribute
-                name: k8s.namespace.name
       # Metrics arrive as a steady high-volume stream rather than the bursty
       # traffic the shared batch's 200ms default is tuned for. Waiting longer
       # per batch trades a little freshness for far fewer, larger writes into
@@ -305,5 +283,14 @@ spec:
         # rename applies to Envoy's stats and nothing else.
         metrics/envoy:
           receivers: [otlp/envoy]
-          processors: [memory_limiter, k8sattributes/envoy, metricstransform/envoy, batch/metrics]
+          # No k8sattributes here at all. Envoy sends nothing pod-identifying,
+          # so the only association left is `from: connection` - and a meshed
+          # collector sees Linkerd's address rather than Envoy's, which makes
+          # the processor stamp these metrics with the collector's own pod.
+          # Namespace and service.name are declared at the source instead, in
+          # flux/5/envoy-gateway/envoy-proxy.yaml. To get real pod identity
+          # here, unmesh this port with
+          #   config.linkerd.io/skip-inbound-ports: "4319"
+          # on this collector, then add k8sattributes back.
+          processors: [memory_limiter, metricstransform/envoy, batch/metrics]
           exporters: [otlphttp/mimir, debug/detailed]
