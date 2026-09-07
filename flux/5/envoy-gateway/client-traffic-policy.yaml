@@ -40,3 +40,57 @@ spec:
     # by an attacker appending their own XFF entries, while a CIDR allowlist
     # names the proxies you actually trust. The CRD rejects both at once.
     directSourceIP: {}
+
+  # --- Connection limits -----------------------------------------------
+  # Cheapest possible drop: rejected at accept(), before Envoy parses a
+  # single byte of HTTP. Everything below this line costs more per request,
+  # so this is the layer that decides whether a flood is survivable.
+  connection:
+    connectionLimit:
+      # SIZE THIS. Per listener, per Envoy pod - with N replicas the real
+      # ceiling is N x value. Too low is an outage; too high is no limit at
+      # all. Take peak concurrent connections from
+      # envoy.listener.downstream_cx_active (now in Mimir), then leave
+      # generous headroom above the peak.
+      value: 10000
+    # bufferLimit is left at Envoy's 32768-byte default. It bounds how much
+    # memory one connection can pin, so it is the lever that decides how
+    # expensive a slow-read attack is. Lower it only with real request sizes
+    # in hand - it applies to legitimate large requests too.
+
+  # --- Timeouts ---------------------------------------------------------
+  # These defaults are the liability. Envoy's idleTimeout is ONE HOUR, so an
+  # attacker can hold connections open doing nothing, at no cost, and pin
+  # file descriptors and memory in the edge proxies for an hour each. That
+  # is the cheapest L7 attack there is and it is on by default.
+  timeout:
+    tcp:
+      # Connect and then say nothing: closed in 5s rather than 15s.
+      connectionInspectionTimeout: 5s
+    http:
+      # Slowloris defence - caps how long a client may dribble out request
+      # headers. Legitimate clients send headers in one go, so this can be
+      # tight without affecting anyone real.
+      requestHeadersReceivedTimeout: 10s
+      # Slow-POST / RUDY defence: total time to receive the whole request.
+      # RAISE THIS if you accept large uploads over slow connections - it
+      # applies to the request body, and a mobile client on a bad link
+      # uploading a photo is indistinguishable from an attack at this layer.
+      requestReceivedTimeout: 30s
+      # Connection idle with no active streams: 1 hour -> 5 minutes. Safe
+      # for SSE, because a stream that is actively held is not idle.
+      idleTimeout: 5m
+      # Per-stream idle timeout. THIS one does bound SSE: a stream with no
+      # events for longer than this is reset. Kept at Envoy's 5m default
+      # rather than tightened, which means SSE endpoints must emit a
+      # heartbeat (a `:` comment line) comfortably more often than every
+      # 5 minutes. Cutting this without adding heartbeats will break
+      # streaming in a way that looks like an intermittent network fault.
+      streamIdleTimeout: 5m
+
+  # Reap peers that have gone away without closing - otherwise their
+  # connections occupy slots until a timeout above fires.
+  tcpKeepalive:
+    idleTime: 30s
+    interval: 15s
+    probes: 3

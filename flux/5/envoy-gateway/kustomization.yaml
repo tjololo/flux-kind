@@ -3,4 +3,5 @@ kind: Kustomization
 resources:
   - envoy-proxy.yaml
   - client-traffic-policy.yaml
+  - backend-traffic-policy.yaml
   - gateway-api-resources.yaml
