@@ -80,4 +80,4 @@ spec:
       # "tracesToMetrics" in Grafana actually return something.
       metricsGenerator:
         enabled: true
-        remoteWriteUrl: "http://mimir-nginx.monitoring.svc.cluster.local/prometheus/api/v1/push"
+        remoteWriteUrl: "http://mimir-gateway.monitoring.svc.cluster.local/prometheus/api/v1/push"
