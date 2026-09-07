@@ -85,7 +85,10 @@ spec:
         - type: OpenTelemetry
           openTelemetry:
             host: otel-collector.otel-col.svc.cluster.local
-            port: 4317
+            # 4319, not the shared 4317: the collector uses the port to tell
+            # Envoy's stats apart from application OTLP so it can namespace
+            # them as envoy.*. Tracing below still goes to 4317.
+            port: 4319
     tracing:
       # sample 100% of requests
       samplingRate: 100

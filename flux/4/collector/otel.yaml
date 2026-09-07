@@ -34,6 +34,15 @@ spec:
             endpoint: 0.0.0.0:4317
           http:
             endpoint: 0.0.0.0:4318
+      # Envoy's stats sink gets its own port purely so its metrics can be
+      # told apart from application OTLP further down. Envoy emits bare,
+      # unnamespaced stat names (cluster.upstream_rq_total) that need an
+      # envoy.* prefix, and there is no resource attribute on the wire that
+      # reliably separates them from anything else arriving on 4317.
+      otlp/envoy:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4319
       # Scrapes that don't fit the otlp receiver: things that only speak
       # Prometheus exposition and were never going to push to us.
       prometheus:
@@ -59,6 +68,18 @@ spec:
               metrics_path: /metrics
     processors:
       batch: {}
+      # Namespace Envoy's stats so they are meaningful outside Envoy's own
+      # process: cluster.upstream_rq_total becomes envoy.cluster.upstream_rq_total,
+      # which is what OTel convention wants and which Prometheus-shaped
+      # backends normalise to envoy_cluster_upstream_rq_total - the name the
+      # published Envoy dashboards are written against. $$ escapes the regex
+      # capture group from the collector's own env-var expansion.
+      metricstransform/envoy:
+        transforms:
+          - include: ^(.*)$$
+            match_type: regexp
+            action: update
+            new_name: envoy.$${1}
       # Metrics arrive as a steady high-volume stream rather than the bursty
       # traffic the shared batch's 200ms default is tuned for. Waiting longer
       # per batch trades a little freshness for far fewer, larger writes into
@@ -249,4 +270,10 @@ spec:
           processors: [memory_limiter, k8sattributes, batch/metrics]
           # No debug exporter here: at this volume it is the noisiest thing
           # in the collector's own logs. Re-add it when troubleshooting.
+          exporters: [otlphttp/mimir]
+        # Same destination as the pipeline above - split out only so the
+        # rename applies to Envoy's stats and nothing else.
+        metrics/envoy:
+          receivers: [otlp/envoy]
+          processors: [memory_limiter, k8sattributes, metricstransform/envoy, batch/metrics]
           exporters: [otlphttp/mimir]
