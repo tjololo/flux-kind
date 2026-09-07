@@ -222,6 +222,14 @@ spec:
     exporters:
       # Kept alongside the real exporters below for local troubleshooting.
       debug: {}
+      # TEMPORARY - attached to metrics/envoy to see what resource attributes
+      # Envoy's stats sink actually puts on the wire. Remove once the
+      # k8sattributes association is settled; detailed verbosity dumps every
+      # data point and will flood the logs.
+      debug/detailed:
+        verbosity: detailed
+        sampling_initial: 2
+        sampling_thereafter: 500
       otlphttp/mimir:
         # otlphttp appends /v1/metrics itself, landing on Mimir's OTLP
         # ingestion endpoint at /otlp/v1/metrics. The service is
@@ -276,4 +284,4 @@ spec:
         metrics/envoy:
           receivers: [otlp/envoy]
           processors: [memory_limiter, k8sattributes, metricstransform/envoy, batch/metrics]
-          exporters: [otlphttp/mimir]
+          exporters: [otlphttp/mimir, debug/detailed]
