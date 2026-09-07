@@ -100,9 +100,6 @@ spec:
             # name is not obtainable on this path; see the collector's
             # metrics/envoy pipeline for why k8sattributes cannot supply it
             # while the collector is meshed.
-            resourceAttributes:
-              k8s.namespace.name: envoy-gateway-system
-              service.name: envoy-gateway
     tracing:
       # sample 100% of requests
       samplingRate: 100
