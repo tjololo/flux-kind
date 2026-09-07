@@ -53,19 +53,6 @@ spec:
         alertmanager_storage:
           s3:
             bucket_name: mimir-alertmanager
-        # Defaults are 10k samples/s and 150k series per tenant. With
-        # multitenancy off everything lands in one tenant, and Envoy's stats
-        # set alone blows past that - the distributor then 429s, the
-        # collector retries, and its sending queue fills up.
-        limits:
-          ingestion_rate: 100000
-          ingestion_burst_size: 1000000
-          max_global_series_per_user: 1000000
-          max_global_series_per_metric: 0
-          # Batching in the collector can deliver samples slightly behind the
-          # newest one already ingested for a series; without a window those
-          # are rejected outright rather than accepted out of order.
-          out_of_order_time_window: 5m
 
     # Everything below is small.yaml's capacity plan
     # (https://grafana.com/docs/mimir/latest/references/architecture/deployment-modes/),
@@ -75,25 +62,20 @@ spec:
       replicas: 1
       zoneAwareReplication:
         enabled: false
-      # Single ingester, so it absorbs every write on its own. The raised
-      # series limit above needs headroom for the head block to match.
       resources:
         requests:
-          cpu: 300m
-          memory: 1Gi
+          cpu: 100m
+          memory: 512Mi
         limits:
-          memory: 2Gi
+          memory: 1Gi
     distributor:
       replicas: 1
-      # 50m CPU is not enough to parse and hash a real OTLP write stream -
-      # it throttles, writes slow down, and the backpressure surfaces in the
-      # collector as a full sending queue.
       resources:
         requests:
-          cpu: 200m
-          memory: 256Mi
+          cpu: 50m
+          memory: 128Mi
         limits:
-          memory: 512Mi
+          memory: 256Mi
     querier:
       replicas: 1
       resources:
@@ -160,14 +142,10 @@ spec:
           memory: 32Mi
     nginx:
       replicas: 1
-      # Every OTLP write passes through here, so it needs more than the
-      # token allocation a read-mostly gateway would get.
       resources:
         requests:
-          cpu: 100m
-          memory: 64Mi
-        limits:
-          memory: 128Mi
+          cpu: 10m
+          memory: 32Mi
 
     # small.yaml fronts blocks/index/chunk/metadata lookups with memcached
     # tiers. Cut for the kind cluster resource budget - Mimir works fine

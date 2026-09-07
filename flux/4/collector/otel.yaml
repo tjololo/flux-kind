@@ -61,8 +61,8 @@ spec:
       batch: {}
       # Metrics arrive as a steady high-volume stream rather than the bursty
       # traffic the shared batch's 200ms default is tuned for. Waiting longer
-      # per batch cuts the request rate into Mimir by an order of magnitude,
-      # which is what actually keeps the sending queue drained.
+      # per batch trades a little freshness for far fewer, larger writes into
+      # Mimir.
       batch/metrics:
         timeout: 5s
         send_batch_size: 2000
@@ -203,13 +203,16 @@ spec:
       debug: {}
       otlphttp/mimir:
         # otlphttp appends /v1/metrics itself, landing on Mimir's OTLP
-        # ingestion endpoint at /otlp/v1/metrics.
-        endpoint: http://mimir-nginx.monitoring.svc.cluster.local/otlp
-        # A single-replica Mimir on kind absorbs a write burst much slower
-        # than this collector can produce one, so the defaults (queue_size
-        # 1000, num_consumers 10) overflow and the exporter starts logging
-        # "sending queue is full" while dropping whole batches. More
-        # in-flight requests plus a deeper queue rides out the bursts.
+        # ingestion endpoint at /otlp/v1/metrics. The service is
+        # mimir-gateway, not mimir-nginx - mimir-distributed dropped the
+        # standalone nginx component in favour of the gateway, which serves
+        # the same read/write routing on port 80.
+        endpoint: http://mimir-gateway.monitoring.svc.cluster.local/otlp
+        # Headroom over the defaults (queue_size 1000, num_consumers 10) so
+        # a slow stretch from a single-replica Mimir on kind doesn't
+        # immediately overflow into dropped batches. Note that a full queue
+        # says nothing about why - it filled here because every request was
+        # failing to resolve, not because Mimir was pushing back.
         sending_queue:
           enabled: true
           num_consumers: 20
